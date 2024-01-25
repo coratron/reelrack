@@ -177,11 +177,11 @@ function updateTable() {
       reel.id,
       reel.value,
       reel.package,
-      manufacturerCheckbox.checked ? reel.manufacturer : null,
-      skuCheckbox.checked ? reel.sku : null,
       reel.part_number,
-      quantityCheckbox.checked ? reel.quantity : null,
       reel.comp_type,
+      skuCheckbox.checked ? reel.sku : null,
+      manufacturerCheckbox.checked ? reel.manufacturer : null,
+      quantityCheckbox.checked ? reel.quantity : null,
     ]
       .filter((item) => item !== null)
       .forEach((text) => {

@@ -10,21 +10,33 @@
         <h1>Reel Rack mk I</h1>
       </header>
       <div class="toggle-fields">
-        <label class="switch">
-          <input type="checkbox" id="toggle-manufacturer" checked />
-          <span class="slider round"></span>
-          Manufacturer
-        </label>
-        <label class="switch">
-          <input type="checkbox" id="toggle-sku" checked />
-          <span class="slider round"></span>
-          SKU
-        </label>
-        <label class="switch">
-          <input type="checkbox" id="toggle-quantity" checked />
-          <span class="slider round"></span>
-          Quantity
-        </label>
+        <div class="switch-container">
+          <label for="toggle-manufacturer">
+            <div class="switch">
+              <input type="checkbox" id="toggle-manufacturer" checked />
+              <span class="slider round"></span>
+            </div>
+            Manufacturer
+          </label>
+        </div>
+        <div class="switch-container">
+          <label for="toggle-sku">
+            <div class="switch">
+              <input type="checkbox" id="toggle-sku" checked />
+              <span class="slider round"></span>
+            </div>
+            SKU
+          </label>
+        </div>
+        <div class="switch-container">
+          <label for="toggle-quantity">
+            <div class="switch">
+              <input type="checkbox" id="toggle-quantity" checked />
+              <span class="slider round"></span>
+            </div>
+            Quantity
+          </label>
+        </div>
       </div>
       <div id="reelData"></div>
     </div>
