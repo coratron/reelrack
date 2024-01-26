@@ -207,3 +207,21 @@ input:checked + .slider:before {
 #newRowForm input[type="submit"]:hover {
   background-color: #45a049; /* Darker green on hover */
 }
+
+#addRow {
+  display: inline-block;
+  background-color: #4caf50;
+  color: white;
+  padding: 5px 10px; /* Reduced padding */
+  margin-top: 10px; /* Added top margin */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 16px; /* Reduced font size */
+  position: relative;
+}
+
+#addRow:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
