@@ -37,8 +37,37 @@
             Quantity
           </label>
         </div>
-      </div>
+      </div> 
+      
       <div id="reelData"></div>
+
+      <button id="addRow">Add Reel</button>
+
+      <div id="myModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+          <span class="close">&times;</span>
+          <form id="newRowForm">
+            <label for="id">ID:</label><br>
+            <input type="text" id="id" name="id"><br>
+            <label for="value">Value:</label><br>
+            <input type="text" id="value" name="value"><br>
+            <label for="package">Package:</label><br>
+            <input type="text" id="package" name="package"><br>
+            <label for="part_number">Part Number:</label><br>
+            <input type="text" id="part_number" name="part_number"><br>
+            <label for="comp_type">Component Type:</label><br>
+            <input type="text" id="comp_type" name="comp_type"><br>
+            <label for="manufacturer">Manufacturer:</label><br>
+            <input type="text" id="manufacturer" name="manufacturer"><br>
+            <label for="sku">SKU:</label><br>
+            <input type="text" id="sku" name="sku"><br>
+            <label for="quantity">Quantity:</label><br>
+            <input type="text" id="quantity" name="quantity"><br>
+            <input type="submit" value="Submit">
+          </form>
+        </div>
+      </div>
     </div>
 
     <script src="script.js"></script>

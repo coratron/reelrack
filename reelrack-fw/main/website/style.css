@@ -28,6 +28,10 @@ table {
   border-collapse: collapse;
 }
 
+table tr:nth-child(even) {
+  background-color: rgb(235, 235, 235);
+}
+
 table,
 th,
 td {
@@ -136,4 +140,70 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  border-radius: 10px; /* Rounded corners */
+  width: 60%; /* Reduced width */
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); /* Shadow for 3D effect */
+}
+
+/* The Close Button */
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Form field styles */
+#newRowForm input[type="text"] {
+  width: 100%; /* Full width */
+  padding: 12px 20px; /* Padding */
+  margin: 8px 0; /* Margin */
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px; /* Rounded borders */
+  box-sizing: border-box;
+}
+
+#newRowForm input[type="submit"] {
+  width: 100%; /* Full width */
+  background-color: #4CAF50; /* Green background */
+  color: white; /* White text */
+  padding: 14px 20px; /* Padding */
+  margin: 8px 0; /* Margin */
+  border: none;
+  border-radius: 4px; /* Rounded borders */
+  cursor: pointer;
+}
+
+#newRowForm input[type="submit"]:hover {
+  background-color: #45a049; /* Darker green on hover */
 }

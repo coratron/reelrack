@@ -141,6 +141,51 @@ manufacturerCheckbox.addEventListener("change", updateTable);
 skuCheckbox.addEventListener("change", updateTable);
 quantityCheckbox.addEventListener("change", updateTable);
 
+function setupModal(button, modal, reelId) {
+  // Get the <span> element that closes the modal
+  var span = modal.getElementsByClassName("close")[0];
+
+  // Get the input field for ID
+  var idField = modal.querySelector("#id");
+
+  
+
+  // When the user clicks the button, open the modal 
+  button.onclick = function() {
+    modal.style.display = "block";
+      // Check if reelId is a number
+    if (typeof reelId === "number") {
+      // Set the reelId field as plain text read-only
+      idField.setAttribute("readonly", true);
+      idField.style.backgroundColor = "lightgray";
+      idField.value = reelId;
+    } else {
+      // Set the reelId field as editable
+      idField.removeAttribute("readonly");
+      idField.style.backgroundColor = "white";
+      idField.value = "";
+    }
+  }
+
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = function() {
+    modal.style.display = "none";
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  }
+}
+
+
+
+var modal = document.getElementById("myModal");
+var btn = document.getElementById("addRow");
+setupModal(btn, modal, null);
+
 function updateTable() {
   // Clear the table
   while (table.firstChild) {
@@ -184,15 +229,47 @@ function updateTable() {
       quantityCheckbox.checked ? reel.quantity : null,
     ]
       .filter((item) => item !== null)
-      .forEach((text) => {
+      .forEach((text, index) => {
         const td = document.createElement("td");
-        td.textContent = text;
+        if (index === 0) {
+          const reelIDButton = document.createElement("button");
+          reelIDButton.textContent = text;
+          reelIDButton.addEventListener("click", () => {
+            // Trigger the endpoint here
+            fetch("http://example.com/endpoint", {
+              method: "POST",
+              body: JSON.stringify({ reelID: text }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                // Handle the response data here
+              })
+              .catch((error) => {
+                // Handle any errors here
+              });
+          });
+          td.appendChild(reelIDButton);
+
+          
+          const editButton = document.createElement("button");
+          editButton.textContent = "✎"; // Edit symbol
+          editButton.style.marginLeft = "5px";
+          setupModal(editButton, modal, reel.id);
+          td.appendChild(editButton);
+        } else {
+          td.textContent = text;
+        }
         row.appendChild(td);
       });
     tbody.appendChild(row);
   });
   table.appendChild(tbody);
 }
+
+
 
 // Initial table update
 updateTable();
@@ -204,3 +281,60 @@ document.getElementById("toggle-sku").addEventListener("change", updateTable);
 document
   .getElementById("toggle-quantity")
   .addEventListener("change", updateTable);
+
+  document.getElementById('addRow').addEventListener('click', function() {
+    var newRowData = {
+      // Data for the new row goes here
+    };
+  
+    fetch('http://esp32-server/add-row', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newRowData)
+    });
+  });
+
+
+
+
+  // Handle form submission
+  document.getElementById('newRowForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    var newRowData = {
+      id: document.getElementById('id').value,
+      value: document.getElementById('value').value,
+      package: document.getElementById('package').value,
+      part_number: document.getElementById('part_number').value,
+      comp_type: document.getElementById('comp_type').value,
+      sku: document.getElementById('sku').value,
+      manufacturer: document.getElementById('manufacturer').value,
+      quantity: document.getElementById('quantity').value
+    };
+
+    fetch('http://esp32-server/add-row', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newRowData)
+    }).then(function() {
+      // Close the modal
+      modal.style.display = "none";
+
+      // Clear the form
+      document.getElementById('id').value = '';
+      document.getElementById('value').value = '';
+      document.getElementById('package').value = '';
+      document.getElementById('part_number').value = '';
+      document.getElementById('comp_type').value = '';
+      document.getElementById('sku').value = '';
+      document.getElementById('manufacturer').value = '';
+      document.getElementById('quantity').value = '';
+
+      // Update the table
+      updateTable();
+    });
+  });
