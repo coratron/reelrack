@@ -44,6 +44,7 @@ fetch("http://your-server-url/api/reels")
       ].forEach((text) => {
         const td = document.createElement("td");
         td.textContent = text;
+        td.id = `cell-${rowIndex}-${columnIndex}`;
         row.appendChild(td);
       });
       tbody.appendChild(row);
@@ -56,29 +57,25 @@ fetch("http://your-server-url/api/reels")
   .catch((error) => console.error("Error:", error));
 
 // Mock data
-let data = [
-  {
-    id: 0,
-    value: "Value 1",
-    package: "Package 1",
-    quantity: 10,
-    manufacturer: "Manufacturer 1",
-    part_number: "Part Number 1",
-    sku: "SKU 1",
-    comp_type: "Component Type 1",
-  },
-  {
-    id: 1,
-    value: "Value 2",
-    package: "Package 2",
-    quantity: 20,
-    manufacturer: "Manufacturer 2",
-    part_number: "Part Number 2",
-    sku: "SKU 2",
-    comp_type: "Component Type 2",
-  },
-  // Add more objects as needed
-];
+let data = [];
+
+for (let i = 0; i < 35; i++) {
+  data.push({
+    id: i,
+    value: `Value ${i + 1}`,
+    package: `Package ${i + 1}`,
+    quantity: 10 * (i + 1),
+    manufacturer: `Manufacturer ${i + 1}`,
+    part_number: `Part Number ${i + 1}`,
+    sku: `SKU ${i + 1}`,
+    comp_type: `Component Type ${i + 1}`,
+  });
+}
+
+let settings = {
+  numRows: 2,
+  numReelsPerRow: 35,
+};
 
 // Get the div where we will put the reel data
 const reelDataDiv = document.getElementById("reelData");
@@ -167,23 +164,23 @@ function setupModal(button, modal, reelId) {
       idField.style.backgroundColor = "lightgray";
       idField.value = reelId;
 
-      var reelData = data.find(item => item.id === reelId);
+      var reelData = data.find((item) => item.id === reelId);
 
-    if (reelData) {
-      // Set the reelId field as plain text read-only
-      idField.setAttribute("readonly", true);
-      idField.style.backgroundColor = "lightgray";
-      idField.value = reelData.id;
+      if (reelData) {
+        // Set the reelId field as plain text read-only
+        idField.setAttribute("readonly", true);
+        idField.style.backgroundColor = "lightgray";
+        idField.value = reelData.id;
 
-      // Populate other fields using data
-      valueField.value = reelData.value;
-      packageField.value = reelData.package;
-      quantityField.value = reelData.quantity;
-      manufacturerField.value = reelData.manufacturer;
-      partNumberField.value = reelData.part_number;
-      skuField.value = reelData.sku;
-      compTypeField.value = reelData.comp_type;
-    } 
+        // Populate other fields using data
+        valueField.value = reelData.value;
+        packageField.value = reelData.package;
+        quantityField.value = reelData.quantity;
+        manufacturerField.value = reelData.manufacturer;
+        partNumberField.value = reelData.part_number;
+        skuField.value = reelData.sku;
+        compTypeField.value = reelData.comp_type;
+      }
     } else {
       // Set the reelId field as editable
       idField.removeAttribute("readonly");
@@ -343,7 +340,7 @@ document
     };
 
     // Find the corresponding object in the data array
-    var reelData = data.find(item => item.id === newRowData.id);
+    var reelData = data.find((item) => item.id === newRowData.id);
 
     if (reelData) {
       // Update the object with the new values
@@ -380,3 +377,114 @@ document
     modal.style.display = "none";
     updateTable();
   });
+
+function configureSettingsModal(modal, button, sform) {
+  // Get the <span> element that closes the modal
+  var span = modal.getElementsByClassName("close")[0];
+
+  button.onclick = function () {
+    modal.style.display = "block";
+
+    //load stored values in settings
+    document.getElementById("numRows").value = settings.numRows;
+    document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
+  };
+
+  // When the user clicks on <span> (x), close the modal
+  span.onclick = function () {
+    modal.style.display = "none";
+  };
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  sform.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    //check if the values are valid
+    if (document.getElementById("numRows").value <= 0) {
+      alert("Number of rows must be greater than 0");
+      return;
+    } else if (document.getElementById("numReelsPerRow").value <= 0) {
+      alert("Number of reels per row must be greater than 0");
+      return;
+    } else {
+      settings.numRows = document.getElementById("numRows").value;
+      settings.numReelsPerRow = document.getElementById("numReelsPerRow").value;
+    }
+
+    //FIXME: send to endpoint
+    fetch("http://esp32-server/settings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(settings),
+    }).then(function () {
+      // Update the table
+      updateTable();
+    });
+
+    // Close the modal
+    modal.style.display = "none";
+
+    // reload racktable
+    loadRackTable();
+  });
+}
+
+let settingsModal = document.getElementById("settingsModal");
+let settingsButton = document.getElementById("config-button");
+let settingsForm = document.getElementById("settingsForm");
+configureSettingsModal(settingsModal, settingsButton, settingsForm);
+
+function loadRackTable() {
+  // Get the rackTable element
+  let rackTable = document.getElementById("rackTable");
+
+  // Get the number of rows and columns from your settings
+  let numRows = settings.numRows;
+  let numColumns = settings.numReelsPerRow;
+
+  // Loop through the number of rows
+  for (let i = 0; i < numRows; i++) {
+    // Create a new row
+    let row = document.createElement("tr");
+
+    // Loop through the number of columns
+    for (let j = 0; j < numColumns; j++) {
+      // Create a new cell
+      let cell = document.createElement("td");
+
+      // Set the cell's id to its position in the table
+      cell.id = "cell-" + i + "-" + j;
+
+      // Populate the cell with the index number
+      cell.innerText = i * numColumns + j;
+
+      // Add an onclick event to the cell
+      cell.onclick = function () {
+        // Get the cell in the other table
+        let cellInOtherTable = document.getElementById("cell-" + i + "-" + j);
+
+        // Calculate the scroll position
+        let scrollPosition =
+          cellInOtherTable.offsetTop - window.innerHeight / 2;
+
+        // Scroll to the cell
+        window.scrollTo({ top: scrollPosition, behavior: "smooth" });
+      };
+      // Append the cell to the row
+      row.appendChild(cell);
+    }
+
+    // Append the row to the table
+    rackTable.appendChild(row);
+  }
+}
+//load at least once
+loadRackTable();

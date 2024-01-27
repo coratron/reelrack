@@ -7,8 +7,18 @@
   <body>
     <div class="container">
       <header>
-        <h1>Reel Rack mk I</h1>
+        <div class="header-content">
+          <h1>Reel Rack mk I</h1>
+          <div id="config-button">
+            &#x2699;
+          </div>
+        </div>
       </header>
+      <div id="rackTableDiv">
+        <table id="rackTable" class="rack-table">
+          <!-- Rows and cells will be added dynamically -->
+        </table>
+      </div>
       <div class="toggle-fields">
         <div class="switch-container">
           <label for="toggle-manufacturer">
@@ -46,8 +56,11 @@
       <div id="myModal" class="modal">
         <!-- Modal content -->
         <div class="modal-content">
-          <span class="close">&times;</span>
-          <form id="newRowForm">
+          <div class="modal-header">
+            <h3>Reel Configuration</h3>
+            <span class="close">&times;</span>
+          </div>
+          <form id="newRowForm" class="fancyForm">
             <label for="id">ID:</label><br>
             <input type="text" id="id" name="id"><br>
             <label for="value">Value:</label><br>
@@ -68,6 +81,25 @@
           </form>
         </div>
       </div>
+
+      <div id="settingsModal" class="modal">
+        <!-- Settings Modal content -->
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Reel Rack Configuration</h3>
+            <span class="close">&times;</span>
+          </div>
+          <form id="settingsForm" class="fancyForm">
+            <label for="numRows">Number of Rows:</label><br>
+            <input type="text" id="numRows" name="numRows"><br>
+            <label for="numReelsPerRow">Number of Reels per Row:</label><br>
+            <input type="text" id="numReelsPerRow" name="numReelsPerRow"><br>
+            <input type="submit" value="Submit">
+          </form>
+        </div>
+      </div>
+
+      
     </div>
 
     <script src="script.js"></script>
