@@ -30,8 +30,10 @@ fetch("http://your-server-url/api/reels")
 
     // Create table body
     const tbody = document.createElement("tbody");
-    data.forEach((reel) => {
-      const row = document.createElement("tr");
+    console.log(data);
+    data.forEach((reel, rowIndex) => {
+      let row = document.createElement("tr");
+      row.id = `row-${rowIndex}`;
       [
         reel.id,
         reel.value,
@@ -41,10 +43,9 @@ fetch("http://your-server-url/api/reels")
         reel.sku,
         reel.manufacturer,
         reel.quantity,
-      ].forEach((text) => {
-        const td = document.createElement("td");
+      ].forEach((text, columnIndex) => {
+        let td = document.createElement("td");
         td.textContent = text;
-        td.id = `cell-${rowIndex}-${columnIndex}`;
         row.appendChild(td);
       });
       tbody.appendChild(row);
@@ -59,7 +60,7 @@ fetch("http://your-server-url/api/reels")
 // Mock data
 let data = [];
 
-for (let i = 0; i < 35; i++) {
+for (let i = 0; i < 40; i++) {
   data.push({
     id: i,
     value: `Value ${i + 1}`,
@@ -75,6 +76,7 @@ for (let i = 0; i < 35; i++) {
 let settings = {
   numRows: 2,
   numReelsPerRow: 35,
+  ledColour: "#FF0000",
 };
 
 // Get the div where we will put the reel data
@@ -103,10 +105,13 @@ const headerRow = document.createElement("tr");
 thead.appendChild(headerRow);
 table.appendChild(thead);
 
-// Create table body
+/// Create table body
 const tbody = document.createElement("tbody");
-data.forEach((reel) => {
-  const row = document.createElement("tr");
+console.log(data);
+data.forEach((reel, rowIndex) => {
+  let row = document.createElement("tr");
+  row.id = `row-${rowIndex}`;
+  console.log(row.id);
   [
     reel.id,
     reel.value,
@@ -116,8 +121,8 @@ data.forEach((reel) => {
     reel.sku,
     reel.manufacturer,
     reel.quantity,
-  ].forEach((text) => {
-    const td = document.createElement("td");
+  ].forEach((text, columnIndex) => {
+    let td = document.createElement("td");
     td.textContent = text;
     row.appendChild(td);
   });
@@ -245,8 +250,9 @@ function updateTable() {
 
   // Create table body
   const tbody = document.createElement("tbody");
-  data.forEach((reel) => {
-    const row = document.createElement("tr");
+  data.forEach((reel, rowIndex) => {
+    let row = document.createElement("tr");
+    row.id = `row-${rowIndex}`;
     [
       reel.id,
       reel.value,
@@ -263,23 +269,23 @@ function updateTable() {
         if (index === 0) {
           const reelIDButton = document.createElement("button");
           reelIDButton.textContent = text;
-          reelIDButton.addEventListener("click", () => {
-            // Trigger the endpoint here
-            fetch("http://example.com/endpoint", {
-              method: "POST",
-              body: JSON.stringify({ reelID: text }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                // Handle the response data here
-              })
-              .catch((error) => {
-                // Handle any errors here
-              });
-          });
+          // reelIDButton.addEventListener("click", () => {
+          //   // Trigger the endpoint here
+          //   fetch("http://example.com/endpoint", {
+          //     method: "POST",
+          //     body: JSON.stringify({ reelID: text }),
+          //     headers: {
+          //       "Content-Type": "application/json",
+          //     },
+          //   })
+          //     .then((response) => response.json())
+          //     .then((data) => {
+          //       // Handle the response data here
+          //     })
+          //     .catch((error) => {
+          //       // Handle any errors here
+          //     });
+          // });
           td.appendChild(reelIDButton);
 
           const editButton = document.createElement("button");
@@ -388,6 +394,7 @@ function configureSettingsModal(modal, button, sform) {
     //load stored values in settings
     document.getElementById("numRows").value = settings.numRows;
     document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
+    document.getElementById("ledColour").value = settings.ledColour;
   };
 
   // When the user clicks on <span> (x), close the modal
@@ -415,6 +422,7 @@ function configureSettingsModal(modal, button, sform) {
     } else {
       settings.numRows = document.getElementById("numRows").value;
       settings.numReelsPerRow = document.getElementById("numReelsPerRow").value;
+      settings.ledColour = document.getElementById("ledColour").value;
     }
 
     //FIXME: send to endpoint
@@ -446,6 +454,11 @@ function loadRackTable() {
   // Get the rackTable element
   let rackTable = document.getElementById("rackTable");
 
+  // Remove all existing rows from the rackTable
+  while (rackTable.firstChild) {
+    rackTable.removeChild(rackTable.firstChild);
+  }
+
   // Get the number of rows and columns from your settings
   let numRows = settings.numRows;
   let numColumns = settings.numReelsPerRow;
@@ -460,23 +473,54 @@ function loadRackTable() {
       // Create a new cell
       let cell = document.createElement("td");
 
-      // Set the cell's id to its position in the table
-      cell.id = "cell-" + i + "-" + j;
+      // Get the reelData div
+      let reelDataDiv = document.getElementById("reelData");
+
+      // Get the table inside the reelData div
+      let table = reelDataDiv.querySelector("table");
+
+      // Get the rows in the table
+      let rows = table.querySelectorAll("tr");
+
+      // Get the number of rows
+      let numRows = rows.length - 1;
+
+      // If the corresponding row in the reelData table is missing, add a class to the cell
+      if (i * numColumns + j >= numRows) {
+        cell.classList.add("missing-row");
+      }
+
+      console.log(numRows);
 
       // Populate the cell with the index number
       cell.innerText = i * numColumns + j;
 
       // Add an onclick event to the cell
       cell.onclick = function () {
-        // Get the cell in the other table
-        let cellInOtherTable = document.getElementById("cell-" + i + "-" + j);
+        // Get the id of the cell
+        const id = this.innerText;
+        console.log(id);
+
+        // Get the corresponding row in the reelData table
+        let targetRow = document.getElementById(`row-${id}`);
+        console.log(targetRow);
 
         // Calculate the scroll position
-        let scrollPosition =
-          cellInOtherTable.offsetTop - window.innerHeight / 2;
+        let scrollPosition = targetRow.offsetTop - window.innerHeight / 2;
 
-        // Scroll to the cell
+        // Scroll to the row
         window.scrollTo({ top: scrollPosition, behavior: "smooth" });
+
+        //clear all the backgrounds for all rows
+        for (let i = 0; i < numRows; i++) {
+          let row = document.getElementById(`row-${i}`);
+          row.style.backgroundColor = "";
+        }
+
+        // Change the background color of the row
+        targetRow.style.backgroundColor = "lightgreen";
+
+        console.log("Clicked cell " + id);
       };
       // Append the cell to the row
       row.appendChild(cell);
@@ -486,5 +530,40 @@ function loadRackTable() {
     rackTable.appendChild(row);
   }
 }
+
 //load at least once
 loadRackTable();
+
+// Get the search bar
+const searchBar = document.getElementById("searchBar");
+
+// Add an input event listener to the search bar
+searchBar.addEventListener("input", function () {
+  // Get the search string
+  const searchString = this.value.toLowerCase();
+
+  // Get the rows in the reelData table
+  const rows = document.getElementById("reelData").getElementsByTagName("tr");
+
+  // Loop through the rows
+  for (let i = 1; i < rows.length; i++) {
+    // Get the cells in the row
+    const cells = rows[i].getElementsByTagName("td");
+
+    // Loop through the cells
+    let found = false;
+    for (let j = 0; j < cells.length && !found; j++) {
+      // Check if the cell's text includes the search string
+      if (cells[j].textContent.toLowerCase().includes(searchString)) {
+        // Show the row
+        rows[i].style.display = "";
+        found = true;
+      }
+    }
+
+    // If no cell in the row includes the search string, hide the row
+    if (!found) {
+      rows[i].style.display = "none";
+    }
+  }
+});

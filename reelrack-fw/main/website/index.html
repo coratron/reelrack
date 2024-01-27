@@ -19,35 +19,41 @@
           <!-- Rows and cells will be added dynamically -->
         </table>
       </div>
+      
+      <div id="searchBarDiv">
+        <input type="text" id="searchBar" placeholder="Search...">
+      </div>
+      
       <div class="toggle-fields">
         <div class="switch-container">
           <label for="toggle-manufacturer">
+            Manufacturer
             <div class="switch">
               <input type="checkbox" id="toggle-manufacturer" checked />
               <span class="slider round"></span>
             </div>
-            Manufacturer
           </label>
         </div>
         <div class="switch-container">
           <label for="toggle-sku">
+            SKU
             <div class="switch">
               <input type="checkbox" id="toggle-sku" checked />
               <span class="slider round"></span>
             </div>
-            SKU
           </label>
         </div>
         <div class="switch-container">
           <label for="toggle-quantity">
+            Quantity
             <div class="switch">
               <input type="checkbox" id="toggle-quantity" checked />
               <span class="slider round"></span>
             </div>
-            Quantity
           </label>
         </div>
       </div> 
+
       
       <div id="reelData"></div>
 
@@ -90,6 +96,8 @@
             <span class="close">&times;</span>
           </div>
           <form id="settingsForm" class="fancyForm">
+            <label for="ledColour">LED Colour:</label><br>
+            <input type="color" id="ledColour" name="ledColour"><br>
             <label for="numRows">Number of Rows:</label><br>
             <input type="text" id="numRows" name="numRows"><br>
             <label for="numReelsPerRow">Number of Reels per Row:</label><br>

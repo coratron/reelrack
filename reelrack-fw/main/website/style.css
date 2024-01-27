@@ -83,6 +83,15 @@ th {
   margin-right: 10px;
 }
 
+.switch-container label {
+  display: flex;
+  align-items: center;
+}
+
+.switch-container label .switch {
+  margin-left: 10px;
+}
+
 /* The slider */
 .slider {
   position: absolute;
@@ -131,8 +140,8 @@ input:checked + .slider:before {
 .toggle-fields {
   display: flex;
   justify-content: space-between;
-  max-width: 300px; /* Adjust this value to make the row narrower */
-  margin: 10px auto; /* Center the container */
+  max-width: 600px; /* Adjust this value to make the row narrower */
+  margin: 20px auto; /* Center the container */
 }
 
 /* Switch container */
@@ -140,6 +149,7 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-left: 30px;
 }
 
 /* The Modal (background) */
@@ -274,7 +284,7 @@ input:checked + .slider:before {
 }
 
 #rackTable td:hover {
-  background-color: #4caf50;
+  background-color: lightgreen;
   cursor: default; /* Hide editing cursor */
 }
 
@@ -292,4 +302,34 @@ input:checked + .slider:before {
     font-size: 12px;
     padding: 10px;
   }
+}
+
+#rackTable td.missing-row {
+  background-color: darkgrey;
+}
+
+#searchBar {
+  width: 100%; /* Full-width */
+  font-size: 16px; /* Increase font-size */
+  padding: 12px 20px; /* Add some padding */
+  margin: 15px 0; /* Add some margin */
+  border: 1px solid #ddd; /* Add a grey border */
+  border-radius: 5px; /* Rounded borders */
+}
+
+#searchBar:focus {
+  outline: none; /* Remove outline on focus */
+  border: 1px solid #4caf50; /* Add a green border on focus */
+}
+
+#searchBarDiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* margin-bottom: 20px; */
+  padding: 0 20px;
+}
+
+#ledColour {
+  margin: 6px auto ; /* Add top margin */
 }
