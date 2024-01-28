@@ -13,7 +13,9 @@
 #include "esp_log.h"
 #include "esp_vfs.h"
 #include "cJSON.h"
+#include <string.h>
 #include "db.h"
+#include "rgb.h"
 
 static const char *REST_TAG = "esp-rest";
 #define REST_CHECK(a, str, goto_tag, ...)                                              \
@@ -230,7 +232,7 @@ static esp_err_t rack_settings_get_handler(httpd_req_t *req)
 
     cJSON_AddNumberToObject(rack_settings_json, "numReelsPerRow", rack_settings.numReelsPerRow);
     cJSON_AddNumberToObject(rack_settings_json, "numRows", rack_settings.numRows);
-    //add a string for the colour and include the leading '#'
+    // add a string for the colour and include the leading '#'
     char ledColourStr[8];
     sprintf(ledColourStr, "#%06lX", rack_settings.ledColour);
     cJSON_AddStringToObject(rack_settings_json, "ledColour", ledColourStr);
@@ -240,8 +242,6 @@ static esp_err_t rack_settings_get_handler(httpd_req_t *req)
     cJSON_Delete(rack_settings_json);
     return ESP_OK;
 }
-
-#include <string.h>
 
 static esp_err_t rack_settings_post_handler(httpd_req_t *req)
 {
@@ -278,7 +278,6 @@ static esp_err_t rack_settings_post_handler(httpd_req_t *req)
 
     ESP_LOGI(REST_TAG, "Received JSON data: %s", buf);
 
-
     rack_settings.numReelsPerRow = atoi(cJSON_GetObjectItem(root, "numReelsPerRow")->valuestring);
     rack_settings.numRows = atoi(cJSON_GetObjectItem(root, "numRows")->valuestring);
 
@@ -298,51 +297,51 @@ static esp_err_t rack_settings_post_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
-// static esp_err_t rack_settings_post_handler(httpd_req_t *req)
-// {
-//     int total_len = req->content_len;
-//     int cur_len = 0;
-//     char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
-//     int received = 0;
-//     if (total_len >= SCRATCH_BUFSIZE)
-//     {
-//         /* Respond with 500 Internal Server Error */
-//         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
-//         return ESP_FAIL;
-//     }
-//     while (cur_len < total_len)
-//     {
-//         received = httpd_req_recv(req, buf + cur_len, total_len);
-//         if (received <= 0)
-//         {
-//             /* Respond with 500 Internal Server Error */
-//             httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
-//             return ESP_FAIL;
-//         }
-//         cur_len += received;
-//     }
-//     buf[total_len] = '\0';
+// rgb handler
+static esp_err_t rgb_post_handler(httpd_req_t *req)
+{
+    int total_len = req->content_len;
+    int cur_len = 0;
+    char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+    int received = 0;
+    if (total_len >= SCRATCH_BUFSIZE)
+    {
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+        return ESP_FAIL;
+    }
+    while (cur_len < total_len)
+    {
+        received = httpd_req_recv(req, buf + cur_len, total_len);
+        if (received <= 0)
+        {
+            /* Respond with 500 Internal Server Error */
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+            return ESP_FAIL;
+        }
+        cur_len += received;
+    }
+    buf[total_len] = '\0';
 
-//     cJSON *root = cJSON_Parse(buf);
-//     cJSON *reelsPerRow_json = cJSON_GetObjectItem(root, "numReelsPerRow");
-//     cJSON *rowsPerRack_json = cJSON_GetObjectItem(root, "numRows");
-//     cJSON *ledColour_json = cJSON_GetObjectItem(root, "ledColour");
+    cJSON *root = cJSON_Parse(buf);
+    if (root == NULL)
+    {
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to parse JSON data");
+        return ESP_FAIL;
+    }
 
-//     //print to terminal
-//     ESP_LOGI(REST_TAG, "numReelsPerRow: %d", reelsPerRow_json->valueint);
-//     ESP_LOGI(REST_TAG, "numRows: %d", rowsPerRack_json->valueint);
-//     ESP_LOGI(REST_TAG, "ledColour: %d", ledColour_json->valueint);
+    ESP_LOGI(REST_TAG, "Received JSON data: %s", buf);
 
-//     rack_settings.numReelsPerRow = reelsPerRow_json->valueint;
-//     rack_settings.numRows = rowsPerRack_json->valueint;
-//     rack_settings.ledColour = ledColour_json->valueint;
+    // receive the led index and show led, comes a string, transform to number
+    uint32_t ledIndex = atoi(cJSON_GetObjectItem(root, "reelID")->valuestring);
 
-//     save_rack_settings_to_vfs(&rack_settings);
+    show_led(ledIndex, (rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
 
-//     cJSON_Delete(root);
-//     httpd_resp_sendstr(req, "Post control value successfully");
-//     return ESP_OK;
-// }
+    cJSON_Delete(root);
+    httpd_resp_sendstr(req, "Post control value successfully");
+    return ESP_OK;
+}
 
 esp_err_t start_rest_server(const char *base_path)
 {
@@ -360,6 +359,12 @@ esp_err_t start_rest_server(const char *base_path)
 
     // get rack settings
     get_rack_settings_from_vfs(&rack_settings);
+
+    // configure led strip
+    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows);
+
+    // boot sequence
+    boot_sequence((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
 
     /* URI handler for fetching system info */
     httpd_uri_t system_info_get_uri = {
@@ -398,6 +403,14 @@ esp_err_t start_rest_server(const char *base_path)
         .handler = rack_settings_post_handler,
         .user_ctx = rest_context};
     httpd_register_uri_handler(server, &rack_settings_post_uri);
+
+    // rgb post
+    httpd_uri_t rgb_post_uri = {
+        .uri = "/api/v1/rgb/show",
+        .method = HTTP_POST,
+        .handler = rgb_post_handler,
+        .user_ctx = rest_context};
+    httpd_register_uri_handler(server, &rgb_post_uri);
 
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {

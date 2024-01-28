@@ -269,23 +269,23 @@ function updateTable() {
         if (index === 0) {
           const reelIDButton = document.createElement("button");
           reelIDButton.textContent = text;
-          // reelIDButton.addEventListener("click", () => {
-          //   // Trigger the endpoint here
-          //   fetch("http://example.com/endpoint", {
-          //     method: "POST",
-          //     body: JSON.stringify({ reelID: text }),
-          //     headers: {
-          //       "Content-Type": "application/json",
-          //     },
-          //   })
-          //     .then((response) => response.json())
-          //     .then((data) => {
-          //       // Handle the response data here
-          //     })
-          //     .catch((error) => {
-          //       // Handle any errors here
-          //     });
-          // });
+          reelIDButton.addEventListener("click", () => {
+            // Trigger the endpoint here
+            fetch("/api/v1/rgb/show", {
+              method: "POST",
+              body: JSON.stringify({ reelID: text }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                // Handle the response data here
+              })
+              .catch((error) => {
+                // Handle any errors here
+              });
+          });
           td.appendChild(reelIDButton);
 
           let editButton = document.createElement("button");
