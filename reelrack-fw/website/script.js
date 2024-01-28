@@ -389,19 +389,20 @@ function configureSettingsModal(modal, button, sform) {
   var span = modal.getElementsByClassName("close")[0];
 
   button.onclick = function () {
-    modal.style.display = "block";
-
+    
     //make sure we have the latest values
     fetch("/api/v1/rack_settings/get")
-      .then((response) => response.json())
-      .then((data) => {
-        settings = data;
-      });
-
+    .then((response) => response.json())
+    .then((data) => {
+      settings = data;
+    });
+    
     //load stored values in settings
     document.getElementById("numRows").value = settings.numRows;
     document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
     document.getElementById("ledColour").value = settings.ledColour;
+    
+    modal.style.display = "block";
   };
 
   // When the user clicks on <span> (x), close the modal

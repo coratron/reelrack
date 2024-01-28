@@ -333,10 +333,21 @@ static esp_err_t rgb_post_handler(httpd_req_t *req)
 
     ESP_LOGI(REST_TAG, "Received JSON data: %s", buf);
 
-    // receive the led index and show led, comes a string, transform to number
-    uint32_t ledIndex = atoi(cJSON_GetObjectItem(root, "reelID")->valuestring);
+    cJSON *reelID_item = cJSON_GetObjectItem(root, "reelID");
+    if (reelID_item == NULL)
+    {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to get reelID from JSON data");
+        return ESP_FAIL;
+    }
+    else
+    {
+        uint32_t ledIndex = (uint32_t)cJSON_GetNumberValue(reelID_item);
+        if ((ledIndex >= rack_settings.numReelsPerRow * rack_settings.numRows))
+            show_error_led((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
 
-    show_led(ledIndex, (rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
+        else
+            show_led(ledIndex, (rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
+    }
 
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "Post control value successfully");

@@ -19,8 +19,8 @@
 #include "mdns.h"
 #include "lwip/apps/netbiosns.h"
 #include "protocol_examples_common.h"
-
 #include "db.h"
+#include "rgb.h"
 
 #define MDNS_INSTANCE "esp home web server"
 
@@ -47,6 +47,8 @@ esp_err_t start_rest_server(const char *base_path);
 
 void app_main(void)
 {
+    //REVIEW: clean setup
+
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -57,4 +59,11 @@ void app_main(void)
     ESP_ERROR_CHECK(example_connect());
     ESP_ERROR_CHECK(initialize_vfs());
     ESP_ERROR_CHECK(start_rest_server("/www"));
+
+
+    while(1)
+    {
+        turn_off_leds_on_timeout(LED_TIMEOUT);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }

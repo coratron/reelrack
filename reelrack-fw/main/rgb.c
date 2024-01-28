@@ -4,23 +4,19 @@
 #include "led_strip.h"
 #include "esp_log.h"
 #include "esp_err.h"
+#include "rgb.h"
 
-// GPIO assignment
-#define LED_STRIP_BLINK_GPIO 2
-// 10MHz resolution, 1 tick = 0.1us (led strip needs a high resolution)
-#define LED_STRIP_RMT_RES_HZ (10 * 1000 * 1000)
 
-#define LED_TYPE LED_MODEL_SK6812
-
-static const char *TAG = "example";
+static const char *TAG = "rgb";
 
 led_strip_handle_t led_strip;
 led_strip_config_t led_strip_config;
+long lastUpdate = 0;
 
 esp_err_t configure_led(uint32_t numLeds)
 {
     // LED strip general initialization, according to your led board design
-    led_strip_config.strip_gpio_num = LED_STRIP_BLINK_GPIO;   // The GPIO that connected to the LED strip's data line
+    led_strip_config.strip_gpio_num = LED_STRIP_GPIO;         // The GPIO that connected to the LED strip's data line
     led_strip_config.max_leds = numLeds;                      // The number of LEDs in the strip
     led_strip_config.led_pixel_format = LED_PIXEL_FORMAT_GRB; // Pixel format of your LED strip
     led_strip_config.led_model = LED_TYPE;                    // LED strip model
@@ -46,6 +42,10 @@ esp_err_t configure_led(uint32_t numLeds)
 
 void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue)
 {
+    // turn all LEDs off
+    ESP_ERROR_CHECK(led_strip_clear(led_strip));
+
+    // set the target LED
     ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, ledIndex, red, green, blue));
 
     if (red == 0 && green == 0 && blue == 0)
@@ -55,9 +55,12 @@ void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue)
     }
     else
     {
-        ESP_LOGI(TAG, "LED ON!");
+        ESP_LOGI(TAG, "LED %d ON with colour %d %d %d!", ledIndex, red, green, blue);
         ESP_ERROR_CHECK(led_strip_refresh(led_strip));
     }
+
+    // record the time of the last update
+    lastUpdate = esp_timer_get_time();
 }
 
 void boot_sequence(uint8_t red, uint8_t green, uint8_t blue)
@@ -70,4 +73,27 @@ void boot_sequence(uint8_t red, uint8_t green, uint8_t blue)
         vTaskDelay(pdMS_TO_TICKS(100));
         ESP_ERROR_CHECK(led_strip_clear(led_strip));
     }
+}
+
+void turn_off_leds_on_timeout(long timeout)
+{
+    // when the timer has expired (timer must be set in show_led)
+    if ((esp_timer_get_time() - lastUpdate) > timeout)
+    {
+        ESP_LOGI(TAG, "LED timeout");
+        // turn all LEDs off
+        ESP_ERROR_CHECK(led_strip_clear(led_strip));
+    }
+}
+
+void show_error_led(uint8_t red, uint8_t green, uint8_t blue)
+{
+    // turn all LEDs off
+    ESP_ERROR_CHECK(led_strip_clear(led_strip));
+
+    // set the target LED, and flip the colours so it's clear
+    ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, 0, 255 - red, 255 - green, 255 - blue));
+    ESP_ERROR_CHECK(led_strip_refresh(led_strip));
+
+    lastUpdate = esp_timer_get_time();
 }
