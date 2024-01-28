@@ -288,8 +288,8 @@ function updateTable() {
           // });
           td.appendChild(reelIDButton);
 
-          const editButton = document.createElement("button");
-          editButton.textContent = "✎"; // Edit symbol
+          let editButton = document.createElement("button");
+          editButton.innerHTML = "✎"; // Edit symbol
           editButton.style.marginLeft = "5px";
           setupModal(editButton, modal, reel.id);
           td.appendChild(editButton);
@@ -391,6 +391,13 @@ function configureSettingsModal(modal, button, sform) {
   button.onclick = function () {
     modal.style.display = "block";
 
+    //make sure we have the latest values
+    fetch("/api/v1/rack_settings/get")
+      .then((response) => response.json())
+      .then((data) => {
+        settings = data;
+      });
+
     //load stored values in settings
     document.getElementById("numRows").value = settings.numRows;
     document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
@@ -426,7 +433,7 @@ function configureSettingsModal(modal, button, sform) {
     }
 
     //FIXME: send to endpoint
-    fetch("http://esp32-server/settings", {
+    fetch("/api/v1/rack_settings/save", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -453,6 +460,13 @@ configureSettingsModal(settingsModal, settingsButton, settingsForm);
 function loadRackTable() {
   // Get the rackTable element
   let rackTable = document.getElementById("rackTable");
+
+  //fetch info from settings from server
+  fetch("/api/v1/rack_settings/get")
+    .then((response) => response.json())
+    .then((data) => {
+      settings = data;
+    });
 
   // Remove all existing rows from the rackTable
   while (rackTable.firstChild) {
