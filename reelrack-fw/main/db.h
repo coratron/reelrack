@@ -22,6 +22,12 @@ typedef struct
     int numReelsPerRow;
     int numRows;
     long ledColour;
+    long ledTimeout;
+    long ledBrightness;
+
+    //ssid and password for wifi
+    char ssid[32];
+    char password[32];
 } rack_settings_t;
 
 esp_err_t initialize_vfs();

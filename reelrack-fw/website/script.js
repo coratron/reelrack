@@ -1,77 +1,18 @@
-// Fetch the reel data from your server
-fetch("http://your-server-url/api/reels")
-  .then((response) => response.json())
-  .then((data) => {
-    // Get the div where we will put the reel data
-    const reelDataDiv = document.getElementById("reelData");
+// // Mock data
+// let data = [];
 
-    // Create a table
-    const table = document.createElement("table");
-
-    // Create table header
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    [
-      "ID",
-      "Value",
-      "Package",
-      "Part Number",
-      "Component Type",
-      "SKU",
-      "Manufacturer",
-      "Quantity",
-    ].forEach((text) => {
-      const th = document.createElement("th");
-      th.textContent = text;
-      headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Create table body
-    const tbody = document.createElement("tbody");
-    console.log(data);
-    data.forEach((reel, rowIndex) => {
-      let row = document.createElement("tr");
-      row.id = `row-${rowIndex}`;
-      [
-        reel.id,
-        reel.value,
-        reel.package,
-        reel.part_number,
-        reel.comp_type,
-        reel.sku,
-        reel.manufacturer,
-        reel.quantity,
-      ].forEach((text, columnIndex) => {
-        let td = document.createElement("td");
-        td.textContent = text;
-        row.appendChild(td);
-      });
-      tbody.appendChild(row);
-    });
-    table.appendChild(tbody);
-
-    // Add the table to the div
-    reelDataDiv.appendChild(table);
-  })
-  .catch((error) => console.error("Error:", error));
-
-// Mock data
-let data = [];
-
-for (let i = 0; i < 40; i++) {
-  data.push({
-    id: i,
-    value: `Value ${i + 1}`,
-    package: `Package ${i + 1}`,
-    quantity: 10 * (i + 1),
-    manufacturer: `Manufacturer ${i + 1}`,
-    part_number: `Part Number ${i + 1}`,
-    sku: `SKU ${i + 1}`,
-    comp_type: `Component Type ${i + 1}`,
-  });
-}
+// for (let i = 0; i < 40; i++) {
+//   data.push({
+//     id: i,
+//     value: `Value ${i + 1}`,
+//     package: `Package ${i + 1}`,
+//     quantity: 10 * (i + 1),
+//     manufacturer: `Manufacturer ${i + 1}`,
+//     part_number: `Part Number ${i + 1}`,
+//     sku: `SKU ${i + 1}`,
+//     comp_type: `Component Type ${i + 1}`,
+//   });
+// }
 
 let settings = {
   numRows: 2,
@@ -85,50 +26,50 @@ const reelDataDiv = document.getElementById("reelData");
 // Create a table
 const table = document.createElement("table");
 
-// Create table header
-const thead = document.createElement("thead");
-const headerRow = document.createElement("tr");
-[
-  "ID",
-  "Value",
-  "Package",
-  "Part Number",
-  "Component Type",
-  "SKU",
-  "Manufacturer",
-  "Quantity",
-].forEach((text) => {
-  const th = document.createElement("th");
-  th.textContent = text;
-  headerRow.appendChild(th);
-});
-thead.appendChild(headerRow);
-table.appendChild(thead);
+// // Create table header
+// const thead = document.createElement("thead");
+// const headerRow = document.createElement("tr");
+// [
+//   "ID",
+//   "Value",
+//   "Package",
+//   "Part Number",
+//   "Component Type",
+//   "SKU",
+//   "Manufacturer",
+//   "Quantity",
+// ].forEach((text) => {
+//   const th = document.createElement("th");
+//   th.textContent = text;
+//   headerRow.appendChild(th);
+// });
+// thead.appendChild(headerRow);
+// table.appendChild(thead);
 
-/// Create table body
-const tbody = document.createElement("tbody");
-console.log(data);
-data.forEach((reel, rowIndex) => {
-  let row = document.createElement("tr");
-  row.id = `row-${rowIndex}`;
-  console.log(row.id);
-  [
-    reel.id,
-    reel.value,
-    reel.package,
-    reel.part_number,
-    reel.comp_type,
-    reel.sku,
-    reel.manufacturer,
-    reel.quantity,
-  ].forEach((text, columnIndex) => {
-    let td = document.createElement("td");
-    td.textContent = text;
-    row.appendChild(td);
-  });
-  tbody.appendChild(row);
-});
-table.appendChild(tbody);
+// /// Create table body
+// const tbody = document.createElement("tbody");
+// console.log(data);
+// data.forEach((reel, rowIndex) => {
+//   let row = document.createElement("tr");
+//   row.id = `row-${rowIndex}`;
+//   console.log(row.id);
+//   [
+//     reel.id,
+//     reel.value,
+//     reel.package,
+//     reel.part_number,
+//     reel.comp_type,
+//     reel.sku,
+//     reel.manufacturer,
+//     reel.quantity,
+//   ].forEach((text, columnIndex) => {
+//     let td = document.createElement("td");
+//     td.textContent = text;
+//     row.appendChild(td);
+//   });
+//   tbody.appendChild(row);
+// });
+// table.appendChild(tbody);
 
 // Add the table to the div
 reelDataDiv.appendChild(table);
@@ -137,6 +78,8 @@ reelDataDiv.appendChild(table);
 const manufacturerCheckbox = document.getElementById("toggle-manufacturer");
 const skuCheckbox = document.getElementById("toggle-sku");
 const quantityCheckbox = document.getElementById("toggle-quantity");
+
+updateTable();
 
 // Add event listeners
 manufacturerCheckbox.addEventListener("change", updateTable);
@@ -214,6 +157,49 @@ function setupModal(button, modal, reelId) {
       modal.style.display = "none";
     }
   };
+
+  //on submit, send data to server
+  document
+    .getElementById("newRowForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      var newRowData = {
+        id: Number(document.getElementById("id").value),
+        value: document.getElementById("value").value,
+        package: document.getElementById("package").value,
+        part_number: document.getElementById("part_number").value,
+        comp_type: document.getElementById("comp_type").value,
+        sku: document.getElementById("sku").value,
+        manufacturer: document.getElementById("manufacturer").value,
+        quantity: Number(document.getElementById("quantity").value),
+      };
+
+      fetch("/api/v1/reel/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newRowData),
+      }).then(function () {
+        // Close the modal
+        modal.style.display = "none";
+
+        // Clear the form
+        document.getElementById("id").value = "";
+        document.getElementById("value").value = "";
+        document.getElementById("package").value = "";
+        document.getElementById("part_number").value = "";
+        document.getElementById("comp_type").value = "";
+        document.getElementById("sku").value = "";
+        document.getElementById("manufacturer").value = "";
+        document.getElementById("quantity").value = "";
+
+        // Update the table
+        updateTable();
+      });
+      modal.style.display = "none";
+    });
 }
 
 var modal = document.getElementById("myModal");
@@ -248,59 +234,73 @@ function updateTable() {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // Create table body
-  const tbody = document.createElement("tbody");
-  data.forEach((reel, rowIndex) => {
-    let row = document.createElement("tr");
-    row.id = `row-${rowIndex}`;
-    [
-      reel.id,
-      reel.value,
-      reel.package,
-      reel.part_number,
-      reel.comp_type,
-      skuCheckbox.checked ? reel.sku : null,
-      manufacturerCheckbox.checked ? reel.manufacturer : null,
-      quantityCheckbox.checked ? reel.quantity : null,
-    ]
-      .filter((item) => item !== null)
-      .forEach((text, index) => {
-        const td = document.createElement("td");
-        if (index === 0) {
-          const reelIDButton = document.createElement("button");
-          reelIDButton.textContent = text;
-          reelIDButton.addEventListener("click", () => {
-            // Trigger the endpoint here
-            fetch("/api/v1/rgb/show", {
-              method: "POST",
-              body: JSON.stringify({ reelID: text }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => response.json())
-              .then((data) => {
-                // Handle the response data here
-              })
-              .catch((error) => {
-                // Handle any errors here
+  //fetch data from server for the body
+  fetch("/api/v1/reel/get_all", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // Create table body
+      const tbody = document.createElement("tbody");
+      data.forEach((reel, rowIndex) => {
+        let row = document.createElement("tr");
+        row.id = `row-${rowIndex}`;
+        [
+          reel.id,
+          reel.value,
+          reel.package,
+          reel.part_number,
+          reel.comp_type,
+          skuCheckbox.checked ? reel.sku : null,
+          manufacturerCheckbox.checked ? reel.manufacturer : null,
+          quantityCheckbox.checked ? reel.quantity : null,
+        ]
+          .filter((item) => item !== null)
+          .forEach((text, index) => {
+            const td = document.createElement("td");
+            if (index === 0) {
+              const reelIDButton = document.createElement("button");
+              reelIDButton.textContent = text;
+              reelIDButton.addEventListener("click", () => {
+                // Trigger the endpoint here
+                fetch("/api/v1/rgb/show", {
+                  method: "POST",
+                  body: JSON.stringify({ reelID: text }),
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    // Handle the response data here
+                  })
+                  .catch((error) => {
+                    console.log(error);
+                  });
               });
-          });
-          td.appendChild(reelIDButton);
+              td.appendChild(reelIDButton);
 
-          let editButton = document.createElement("button");
-          editButton.innerHTML = "✎"; // Edit symbol
-          editButton.style.marginLeft = "5px";
-          setupModal(editButton, modal, reel.id);
-          td.appendChild(editButton);
-        } else {
-          td.textContent = text;
-        }
-        row.appendChild(td);
+              let editButton = document.createElement("button");
+              editButton.innerHTML = "✎"; // Edit symbol
+              editButton.style.marginLeft = "5px";
+              setupModal(editButton, modal, reel.id);
+              td.appendChild(editButton);
+            } else {
+              td.textContent = text;
+            }
+            row.appendChild(td);
+          });
+        tbody.appendChild(row);
       });
-    tbody.appendChild(row);
-  });
-  table.appendChild(tbody);
+      table.appendChild(tbody);
+    })
+    .catch((error) => {
+      // Handle any errors here
+      console.log(error);
+    });
 }
 
 // Initial table update
@@ -314,19 +314,19 @@ document
   .getElementById("toggle-quantity")
   .addEventListener("change", updateTable);
 
-document.getElementById("addRow").addEventListener("click", function () {
-  var newRowData = {
-    // Data for the new row goes here
-  };
+// document.getElementById("addRow").addEventListener("click", function () {
+//   var newRowData = {
+//     // Data for the new row goes here
+//   };
 
-  fetch("http://esp32-server/add-row", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(newRowData),
-  });
-});
+//   fetch("http://esp32-server/add-row", {
+//     method: "POST",
+//     headers: {
+//       "Content-Type": "application/json",
+//     },
+//     body: JSON.stringify(newRowData),
+//   });
+// });
 
 // Handle form submission
 document
@@ -356,30 +356,29 @@ document
       data.push(newRowData);
     }
 
-    //FIXME: add again when the server is ready
-    // fetch("http://esp32-server/add-row", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(newRowData),
-    // }).then(function () {
-    //   // Close the modal
-    //   modal.style.display = "none";
+    fetch("/api/v1/reel/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(newRowData),
+    }).then(function () {
+      // Close the modal
+      modal.style.display = "none";
 
-    //   // Clear the form
-    //   document.getElementById("id").value = "";
-    //   document.getElementById("value").value = "";
-    //   document.getElementById("package").value = "";
-    //   document.getElementById("part_number").value = "";
-    //   document.getElementById("comp_type").value = "";
-    //   document.getElementById("sku").value = "";
-    //   document.getElementById("manufacturer").value = "";
-    //   document.getElementById("quantity").value = "";
+      // Clear the form
+      document.getElementById("id").value = "";
+      document.getElementById("value").value = "";
+      document.getElementById("package").value = "";
+      document.getElementById("part_number").value = "";
+      document.getElementById("comp_type").value = "";
+      document.getElementById("sku").value = "";
+      document.getElementById("manufacturer").value = "";
+      document.getElementById("quantity").value = "";
 
-    //   // Update the table
-    //   updateTable();
-    // });
+      // Update the table
+      updateTable();
+    });
     modal.style.display = "none";
     updateTable();
   });
@@ -389,19 +388,22 @@ function configureSettingsModal(modal, button, sform) {
   var span = modal.getElementsByClassName("close")[0];
 
   button.onclick = function () {
-    
     //make sure we have the latest values
     fetch("/api/v1/rack_settings/get")
-    .then((response) => response.json())
-    .then((data) => {
-      settings = data;
-    });
-    
+      .then((response) => response.json())
+      .then((data) => {
+        settings = data;
+      });
+
     //load stored values in settings
     document.getElementById("numRows").value = settings.numRows;
     document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
     document.getElementById("ledColour").value = settings.ledColour;
-    
+    document.getElementById("ledBrightness").value = settings.ledBrightness;
+    document.getElementById("ledTimeout").value = settings.ledTimeout;
+    document.getElementById("ssid").value = settings.ssid;
+    document.getElementById("password").value = settings.password;
+
     modal.style.display = "block";
   };
 
@@ -431,7 +433,10 @@ function configureSettingsModal(modal, button, sform) {
       settings.numRows = document.getElementById("numRows").value;
       settings.numReelsPerRow = document.getElementById("numReelsPerRow").value;
       settings.ledColour = document.getElementById("ledColour").value;
-    }
+      settings.ledBrightness = document.getElementById("ledBrightness").value;
+      settings.ledTimeout = document.getElementById("ledTimeout").value;
+      settings.ssid = document.getElementById("ssid").value;
+      settings.password = document.getElementById("password").value;    }
 
     //FIXME: send to endpoint
     fetch("/api/v1/rack_settings/save", {

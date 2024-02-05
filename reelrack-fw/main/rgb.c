@@ -18,7 +18,7 @@ esp_err_t configure_led(uint32_t numLeds)
     // LED strip general initialization, according to your led board design
     led_strip_config.strip_gpio_num = LED_STRIP_GPIO;         // The GPIO that connected to the LED strip's data line
     led_strip_config.max_leds = numLeds;                      // The number of LEDs in the strip
-    led_strip_config.led_pixel_format = LED_PIXEL_FORMAT_GRB; // Pixel format of your LED strip
+    led_strip_config.led_pixel_format = LED_PIXEL_FORMAT; // Pixel format of your LED strip
     led_strip_config.led_model = LED_TYPE;                    // LED strip model
     led_strip_config.flags.invert_out = false;                // whether to invert the output signal
 

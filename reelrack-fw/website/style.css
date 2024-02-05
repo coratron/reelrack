@@ -193,6 +193,7 @@ input:checked + .slider:before {
 }
 
 /* Form field styles */
+.fancyForm input[type="password"],
 .fancyForm input[type="text"] {
   width: 100%; /* Full width */
   padding: 12px 20px; /* Padding */
@@ -285,7 +286,7 @@ input:checked + .slider:before {
 
 #rackTable td:hover {
   background-color: lightgreen;
-  cursor: default; /* Hide editing cursor */
+  cursor: pointer; /* Hide editing cursor */
 }
 
 #rackTable td {
