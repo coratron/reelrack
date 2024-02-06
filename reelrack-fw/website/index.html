@@ -9,9 +9,19 @@
     <div class="container">
       <header>
         <div class="header-content">
-          <h1>Reel Rack mk I</h1>
-          <div id="config-button">
-            &#x2699;
+          <div id="title">
+            <h1>Reel Rack mk I</h1>
+          </div>
+          <div id="menu-buttons">
+            <div id="reset-button">
+              &#x21BA;
+            </div>
+            <div id="update-button">
+              &#x21A5;
+            </div>
+            <div id="config-button">
+              &#x2699;
+            </div>
           </div>
         </div>
       </header>
@@ -116,7 +126,24 @@
         </div>
       </div>
 
-      
+      <div id="updateModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Firmware Update</h3>
+            <span class="close">&times;</span>
+          </div>
+          <form class="fancyForm">
+            <input type="file" id="myfile" name="myfile"/>
+            <input type="button" value="Submit" id="file_sel"/>
+            <div class="progress">
+              <div class="progress__bar" id="progress">
+                <span id="progress-text"></span>
+              </div>
+              <div class="status" id="status_div"></div>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
 
     <script src="script.js"></script>

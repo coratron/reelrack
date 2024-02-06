@@ -172,22 +172,43 @@ static esp_err_t system_info_get_handler(httpd_req_t *req)
 static esp_err_t reel_data_get_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "application/json");
-    read_reels_from_vfs(reels, rack_settings.numReelsPerRow * rack_settings.numRows);
-    cJSON *reels_json = cJSON_CreateArray();
-    for (int i = 0; i < rack_settings.numReelsPerRow * rack_settings.numRows; i++)
+    if (read_reels_from_vfs(reels, rack_settings.numReelsPerRow * rack_settings.numRows) == ESP_OK)
     {
-        cJSON *reel_json = cJSON_CreateObject();
-        cJSON_AddStringToObject(reel_json, "value", reels[i].value);
-        cJSON_AddStringToObject(reel_json, "package", reels[i].package);
-        cJSON_AddStringToObject(reel_json, "part_number", reels[i].part_number);
-        cJSON_AddStringToObject(reel_json, "comp_type", reels[i].comp_type);
-        cJSON_AddStringToObject(reel_json, "sku", reels[i].sku);
-        cJSON_AddStringToObject(reel_json, "manufacturer", reels[i].manufacturer);
-        cJSON_AddStringToObject(reel_json, "quantity", reels[i].quantity);
-        cJSON_AddItemToArray(reels_json, reel_json);
+        cJSON *reels_json = cJSON_CreateArray();
+        for (int i = 0; i < rack_settings.numReelsPerRow * rack_settings.numRows; i++)
+        {
+            cJSON *reel_json = cJSON_CreateObject();
+            cJSON_AddStringToObject(reel_json, "value", reels[i].value);
+            cJSON_AddStringToObject(reel_json, "package", reels[i].package);
+            cJSON_AddStringToObject(reel_json, "part_number", reels[i].part_number);
+            cJSON_AddStringToObject(reel_json, "comp_type", reels[i].comp_type);
+            cJSON_AddStringToObject(reel_json, "sku", reels[i].sku);
+            cJSON_AddStringToObject(reel_json, "manufacturer", reels[i].manufacturer);
+            cJSON_AddStringToObject(reel_json, "quantity", reels[i].quantity);
+            cJSON_AddItemToArray(reels_json, reel_json);
+        }
+
+        const char *reels_str = cJSON_Print(reels_json);
+        httpd_resp_sendstr(req, reels_str);
+        free((void *)reels_str);
+        cJSON_Delete(reels_json);
+
+        // print success
+        ESP_LOGI(REST_TAG, "Reel data sent successfully - reel_data_get_handler()");
+
+        return ESP_OK;
     }
 
-    return ESP_OK;
+    else
+    {
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read reel data");
+
+        // print the failure message
+        ESP_LOGE(REST_TAG, "Failed to read reel data - reel_data_get_handler()");
+
+        return ESP_FAIL;
+    }
 }
 
 /* Simple handler for storing reel data */
@@ -463,7 +484,7 @@ static esp_err_t update_post_handler(httpd_req_t *req)
         httpd_resp_set_status(req, HTTPD_200);
         httpd_resp_send(req, NULL, 0);
 
-        vTaskDelay(pdMS_TO_TICKS(200));
+        vTaskDelay(pdMS_TO_TICKS(2000));
         esp_restart();
 
         return ESP_OK;
@@ -485,8 +506,9 @@ return_failure:
 static esp_err_t reset_post_handler(httpd_req_t *req)
 {
     // Send a response
-    const char *response = "<html><body><h1>The device is resetting...</h1></body></html>";
-    httpd_resp_set_type(req, "text/html");
+    const char *response = "OK";
+    httpd_resp_set_type(req, "text/plain");
+    httpd_resp_set_status(req, HTTPD_200);
     httpd_resp_send(req, response, strlen(response));
 
     // Delay to allow the response to be sent
@@ -589,11 +611,10 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
     }
 }
 
-void wifi_init_softap(void)
+void wifi_init_common(void)
 {
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
-    esp_netif_create_default_wifi_ap();
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -603,6 +624,11 @@ void wifi_init_softap(void)
                                                         &wifi_event_handler,
                                                         NULL,
                                                         NULL));
+}
+
+void wifi_init_softap(void)
+{
+    esp_netif_create_default_wifi_ap();
 
     wifi_config_t wifi_config;
     strcpy((char *)wifi_config.ap.ssid, EXAMPLE_ESP_WIFI_SSID);
@@ -627,37 +653,59 @@ void wifi_init_softap(void)
 
 esp_err_t wifi_init_station(void)
 {
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    wifi_config_t wifi_config = {};
+    strncpy((char *)wifi_config.sta.ssid, rack_settings.ssid, sizeof(wifi_config.sta.ssid));
+    strncpy((char *)wifi_config.sta.password, rack_settings.password, sizeof(wifi_config.sta.password));
 
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = EXAMPLE_ESP_WIFI_SSID,
-            .password = EXAMPLE_ESP_WIFI_PASS,
-        },
-    };
+    // print wifi_config
+    ESP_LOGI(REST_TAG, "ssid: %s", wifi_config.sta.ssid);
+    ESP_LOGI(REST_TAG, "password: %s", wifi_config.sta.password);
 
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL));
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
+    // Wait for the device to connect to the WiFi network
+    vTaskDelay(pdMS_TO_TICKS(10000)); // wait for 5 seconds
+
+    // Check if the device is connected to the WiFi network
+    if (esp_wifi_connect() != ESP_OK)
+    {
+        ESP_LOGI(REST_TAG, "Failed to connect to the WiFi network");
+        return ESP_FAIL;
+    }
+
     return ESP_OK;
 }
 
 esp_err_t start_rest_server(const char *base_path)
 {
-    // start wifi, try to connect to know network as station, if it fails, start as AP
-    // if (wifi_init_station() != ESP_OK)
-    // {
-    wifi_init_softap();
-    // }
+    // assign default values just in case, overwrite if successfully retrieved
+    rack_settings.numReelsPerRow = 36;
+    rack_settings.numRows = 2;
+    rack_settings.ledBrightness = 100;
+    rack_settings.ledTimeout = 30000;
+    rack_settings.ledColour = 0x00FF00;
+    strcpy(rack_settings.ssid, EXAMPLE_DEFAULT_SSID);
+    strcpy(rack_settings.password, EXAMPLE_DEFAULT_PWD);
+    get_rack_settings_from_vfs(&rack_settings);
+
+    // configure led strip
+    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows);
+
+    // boot sequence
+    boot_sequence((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
+
+    // start wifi, try to connect to known network as station, if it fails, start as AP
+    wifi_init_common();
+    if (wifi_init_station() != ESP_OK)
+    {
+        wifi_init_softap();
+    }
 
     REST_CHECK(base_path, "wrong base path", err);
     rest_server_context_t *rest_context = calloc(1, sizeof(rest_server_context_t));
@@ -667,7 +715,7 @@ esp_err_t start_rest_server(const char *base_path)
     httpd_handle_t server = NULL;
     httpd_config_t config = {
         .task_priority = tskIDLE_PRIORITY + 5,
-        .stack_size = 8192,
+        .stack_size = 32768,
         .core_id = tskNO_AFFINITY,
         .server_port = 80,
         .ctrl_port = 32768,
@@ -692,15 +740,6 @@ esp_err_t start_rest_server(const char *base_path)
 
     ESP_LOGI(REST_TAG, "Starting HTTP Server");
     REST_CHECK(httpd_start(&server, &config) == ESP_OK, "Start server failed", err_start);
-
-    // get rack settings
-    get_rack_settings_from_vfs(&rack_settings);
-
-    // configure led strip
-    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows);
-
-    // boot sequence
-    boot_sequence((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
 
     /* URI handler for fetching system info */
     httpd_uri_t system_info_get_uri = {
@@ -748,17 +787,9 @@ esp_err_t start_rest_server(const char *base_path)
         .user_ctx = rest_context};
     httpd_register_uri_handler(server, &rgb_post_uri);
 
-    /* URI handler for getting web server files */
-    httpd_uri_t common_get_uri = {
-        .uri = "/*",
-        .method = HTTP_GET,
-        .handler = rest_common_get_handler,
-        .user_ctx = rest_context};
-    httpd_register_uri_handler(server, &common_get_uri);
-
     /* URI handler for updating firmware */
     httpd_uri_t update_post_uri = {
-        .uri = "/update",
+        .uri = "/api/v1/update",
         .method = HTTP_POST,
         .handler = update_post_handler,
         .user_ctx = rest_context};
@@ -766,11 +797,19 @@ esp_err_t start_rest_server(const char *base_path)
 
     /* URI handler for resetting the device */
     httpd_uri_t reset_post_uri = {
-        .uri = "/reset",
+        .uri = "/api/v1/reset",
         .method = HTTP_POST,
         .handler = reset_post_handler,
         .user_ctx = rest_context};
     httpd_register_uri_handler(server, &reset_post_uri);
+
+    /* URI handler for getting web server files */
+    httpd_uri_t common_get_uri = {
+        .uri = "/*",
+        .method = HTTP_GET,
+        .handler = rest_common_get_handler,
+        .user_ctx = rest_context};
+    httpd_register_uri_handler(server, &common_get_uri);
 
     return ESP_OK;
 err_start:

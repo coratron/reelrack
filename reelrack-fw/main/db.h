@@ -25,14 +25,14 @@ typedef struct
     long ledTimeout;
     long ledBrightness;
 
-    //ssid and password for wifi
+    // ssid and password for wifi
     char ssid[32];
     char password[32];
 } rack_settings_t;
 
 esp_err_t initialize_vfs();
-void read_reel_from_vfs(int reel_id, smd_reel_t *reel);
-void read_reels_from_vfs(smd_reel_t *reels, int numReels);
+esp_err_t read_reel_from_vfs(int reel_id, smd_reel_t *reel);
+esp_err_t read_reels_from_vfs(smd_reel_t *reels, int numReels);
 void save_reel_to_vfs(int reel_id, smd_reel_t *reel);
 void delete_reel_from_vfs(int reel_id);
 void update_reel_in_vfs(int reel_id, smd_reel_t *reel);

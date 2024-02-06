@@ -46,31 +46,41 @@ esp_err_t initialize_vfs()
     return ret;
 }
 
-void read_reel_from_vfs(int reel_id, smd_reel_t *reel)
+esp_err_t read_reel_from_vfs(int reel_id, smd_reel_t *reel)
 {
     FILE *f = fopen("/www/reels", "r");
     if (f == NULL)
     {
-        ESP_LOGE(TAG_DB, "Failed to open file for reading");
-        return;
+        ESP_LOGE(TAG_DB, "Failed to open file for reading single reel");
+        return ESP_FAIL;
     }
 
     fseek(f, reel_id * sizeof(smd_reel_t), SEEK_SET);
     fread(reel, sizeof(smd_reel_t), 1, f);
     fclose(f);
+
+    return ESP_OK;
 }
 
-void read_reels_from_vfs(smd_reel_t *reels, int numReels)
+// add return value to check if file was opened
+esp_err_t read_reels_from_vfs(smd_reel_t *reels, int numReels)
 {
     FILE *f = fopen("/www/reels", "r");
     if (f == NULL)
     {
-        ESP_LOGE(TAG_DB, "Failed to open file for reading");
-        return;
+        ESP_LOGE(TAG_DB, "Failed to open file for reading multiple reels");
+        return ESP_FAIL;
     }
 
-    fread(reels, sizeof(smd_reel_t)*numReels, 10, f);
+    if (fread(reels, sizeof(smd_reel_t), numReels, f) != numReels)
+    {
+        ESP_LOGE(TAG_DB, "Failed to read reels from file");
+        return ESP_FAIL;
+    }
+
     fclose(f);
+
+    return ESP_OK;
 }
 
 void save_reel_to_vfs(int reel_id, smd_reel_t *reel)
@@ -87,7 +97,7 @@ void save_reel_to_vfs(int reel_id, smd_reel_t *reel)
     fclose(f);
 }
 
-void save_rack_settings_to_vfs(rack_settings_t * rack_settings)
+void save_rack_settings_to_vfs(rack_settings_t *rack_settings)
 {
     FILE *f = fopen("/www/rack_settings", "w");
     if (f == NULL)
@@ -98,32 +108,33 @@ void save_rack_settings_to_vfs(rack_settings_t * rack_settings)
 
     fwrite(rack_settings, sizeof(rack_settings_t), 1, f);
 
-    //print to terminal
+    // print to terminal
     ESP_LOGI(TAG_DB, "rack_settings->numReelsPerRow: %d", rack_settings->numReelsPerRow);
     ESP_LOGI(TAG_DB, "rack_settings->numRows: %d", rack_settings->numRows);
     ESP_LOGI(TAG_DB, "rack_settings->ledColour: %ld", rack_settings->ledColour);
+    ESP_LOGI(TAG_DB, "rack_settings->ledBrightness: %ld", rack_settings->ledBrightness);
+    ESP_LOGI(TAG_DB, "rack_settings->ledTimeout: %ld", rack_settings->ledTimeout);
+    ESP_LOGI(TAG_DB, "rack_settings->ssid: %s", rack_settings->ssid);
+    ESP_LOGI(TAG_DB, "rack_settings->password: %s", rack_settings->password);
 
     fclose(f);
 }
 
-void get_rack_settings_from_vfs(rack_settings_t * rack_settings)
+void get_rack_settings_from_vfs(rack_settings_t *rack_settings)
 {
     FILE *f = fopen("/www/rack_settings", "r");
     if (f == NULL)
     {
         ESP_LOGE(TAG_DB, "Failed to open settings file for reading");
-        //create file
+        // create file
         f = fopen("/www/rack_settings", "w");
         if (f == NULL)
         {
             ESP_LOGE(TAG_DB, "Tried to create the file and assign default values. Failed to open file for writing");
             return;
         }
-        //assign some default values
-        rack_settings->numReelsPerRow = 20;
-        rack_settings->numRows = 2;
-        rack_settings->ledColour = 0x00FF00;
-        //write to file
+
+        // write to file, default values will be written if not read from file
         if (fwrite(rack_settings, sizeof(rack_settings_t), 1, f) != 1)
         {
             ESP_LOGE(TAG_DB, "Failed to write default settings to file");
@@ -137,14 +148,17 @@ void get_rack_settings_from_vfs(rack_settings_t * rack_settings)
         ESP_LOGE(TAG_DB, "Failed to read settings from file");
     }
 
-    //print to terminal
+    // print to terminal
     ESP_LOGI(TAG_DB, "rack_settings->numReelsPerRow: %d", rack_settings->numReelsPerRow);
     ESP_LOGI(TAG_DB, "rack_settings->numRows: %d", rack_settings->numRows);
     ESP_LOGI(TAG_DB, "rack_settings->ledColour: %ld", rack_settings->ledColour);
+    ESP_LOGI(TAG_DB, "rack_settings->ledBrightness: %ld", rack_settings->ledBrightness);
+    ESP_LOGI(TAG_DB, "rack_settings->ledTimeout: %ld", rack_settings->ledTimeout);
+    ESP_LOGI(TAG_DB, "rack_settings->ssid: %s", rack_settings->ssid);
+    ESP_LOGI(TAG_DB, "rack_settings->password: %s", rack_settings->password);
 
     fclose(f);
 }
-
 
 void delete_reel_from_vfs(int reel_id)
 {

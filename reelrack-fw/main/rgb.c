@@ -6,7 +6,6 @@
 #include "esp_err.h"
 #include "rgb.h"
 
-
 static const char *TAG = "rgb";
 
 led_strip_handle_t led_strip;
@@ -16,11 +15,11 @@ long lastUpdate = 0;
 esp_err_t configure_led(uint32_t numLeds)
 {
     // LED strip general initialization, according to your led board design
-    led_strip_config.strip_gpio_num = LED_STRIP_GPIO;         // The GPIO that connected to the LED strip's data line
-    led_strip_config.max_leds = numLeds;                      // The number of LEDs in the strip
+    led_strip_config.strip_gpio_num = LED_STRIP_GPIO;     // The GPIO that connected to the LED strip's data line
+    led_strip_config.max_leds = numLeds;                  // The number of LEDs in the strip
     led_strip_config.led_pixel_format = LED_PIXEL_FORMAT; // Pixel format of your LED strip
-    led_strip_config.led_model = LED_TYPE;                    // LED strip model
-    led_strip_config.flags.invert_out = false;                // whether to invert the output signal
+    led_strip_config.led_model = LED_TYPE;                // LED strip model
+    led_strip_config.flags.invert_out = false;            // whether to invert the output signal
 
     // LED strip backend configuration: RMT
     led_strip_rmt_config_t rmt_config = {
@@ -70,7 +69,7 @@ void boot_sequence(uint8_t red, uint8_t green, uint8_t blue)
     {
         ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, i, red, green, blue));
         ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(10));
         ESP_ERROR_CHECK(led_strip_clear(led_strip));
     }
 }

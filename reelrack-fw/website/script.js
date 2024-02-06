@@ -436,7 +436,8 @@ function configureSettingsModal(modal, button, sform) {
       settings.ledBrightness = document.getElementById("ledBrightness").value;
       settings.ledTimeout = document.getElementById("ledTimeout").value;
       settings.ssid = document.getElementById("ssid").value;
-      settings.password = document.getElementById("password").value;    }
+      settings.password = document.getElementById("password").value;
+    }
 
     //FIXME: send to endpoint
     fetch("/api/v1/rack_settings/save", {
@@ -458,10 +459,100 @@ function configureSettingsModal(modal, button, sform) {
   });
 }
 
+function configureUpdateModal(modal, button) {
+  var span = modal.getElementsByClassName("close")[0];
+
+  button.onclick = function () {
+    modal.style.display = "block";
+  };
+
+  span.onclick = function () {
+    modal.style.display = "none";
+  };
+
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  function upload_file() {
+    document.getElementById("status_div").innerHTML = "Upload in progress";
+    let data = document.getElementById("myfile").files[0];
+    xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/v1/update", true);
+    xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+    xhr.upload.addEventListener("progress", function (event) {
+      if (event.lengthComputable) {
+        var percentComplete = Math.round((event.loaded / event.total) * 100);
+        document.getElementById("progress").style.width = percentComplete + "%";
+        document.getElementById("progress-text").textContent =
+          percentComplete + "%";
+      }
+    });
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === XMLHttpRequest.DONE) {
+        var status = xhr.status;
+        if (status >= 200 && status < 400) {
+          document.getElementById("status_div").innerHTML =
+            "Upload accepted. Device will reboot.";
+        } else {
+          document.getElementById("status_div").innerHTML = "Upload rejected!";
+        }
+      }
+    };
+    xhr.send(data);
+    return false;
+  }
+
+  document.getElementById("myfile").addEventListener("change", function () {
+    if (this.value) {
+      document.getElementById("file_sel").style.display = "block";
+    } else {
+      document.getElementById("file_sel").style.display = "none";
+    }
+  });
+
+  document.getElementById("file_sel").addEventListener("click", function () {
+    document.querySelector(".progress").style.display = "block";
+    upload_file();
+  });
+}
+
 let settingsModal = document.getElementById("settingsModal");
+let updateModal = document.getElementById("updateModal");
 let settingsButton = document.getElementById("config-button");
+let resetButton = document.getElementById("reset-button");
+let updateButton = document.getElementById("update-button");
 let settingsForm = document.getElementById("settingsForm");
 configureSettingsModal(settingsModal, settingsButton, settingsForm);
+configureUpdateModal(updateModal, updateButton);
+
+// reset the device if the button was pressed, if it fails show a different message
+resetButton.onclick = function () {
+  fetch("/api/v1/reset", {
+    method: "POST",
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("HTTP error " + response.status);
+      }
+      return response.text();
+    })
+    .then(function (text) {
+      if (text === "OK") {
+        // show a popup message saying the device has been reset
+        alert("Device is being reset. Please wait for the device to reboot.");
+      } else {
+        console.log("Unexpected response: " + text);
+      }
+    })
+    .catch(function (error) {
+      alert(
+        "There has been a problem with your fetch operation: " + error.message
+      );
+    });
+};
 
 function loadRackTable() {
   // Get the rackTable element
