@@ -398,6 +398,7 @@ input:checked + .slider:before {
 }
 
 #upload-csv,
+#download-csv,
 #delete-table {
   margin-left: auto;
   margin: 20px auto; /* Center the container */
@@ -418,6 +419,23 @@ input:checked + .slider:before {
 
 #upload-csv button:hover {
   background-color: #45a049; /* Darker green on hover */
+}
+
+#download-csv button {
+  display: inline-block;
+  background-color: #2196f3; /* Green background */
+  color: white; /* White text */
+  padding: 10px 20px; /* Padding */
+  border: none; /* No border */
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer; /* Cursor changes when hovering over the button */
+  text-decoration: none; /* No underline */
+  font-size: 16px; /* Font size */
+  transition: background-color 0.3s ease; /* Transition effect for hover */
+}
+
+#download-csv button:hover {
+  background-color: #176db4; /* Darker green on hover */
 }
 
 #delete-table button {

@@ -5,12 +5,13 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "rgb.h"
+#include <sys/time.h>
 
 static const char *TAG = "rgb";
 
 led_strip_handle_t led_strip;
 led_strip_config_t led_strip_config;
-long lastUpdate = 0;
+struct timeval sysTime;
 
 esp_err_t configure_led(uint32_t numLeds)
 {
@@ -59,7 +60,7 @@ void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue)
     }
 
     // record the time of the last update
-    lastUpdate = esp_timer_get_time();
+    gettimeofday(&sysTime, NULL);
 }
 
 void boot_sequence(uint8_t red, uint8_t green, uint8_t blue)
@@ -76,8 +77,11 @@ void boot_sequence(uint8_t red, uint8_t green, uint8_t blue)
 
 void turn_off_leds_on_timeout(long timeout)
 {
+    static struct timeval now;
+    gettimeofday(&now, NULL);
+
     // when the timer has expired (timer must be set in show_led)
-    if ((esp_timer_get_time() - lastUpdate) > timeout)
+    if (now.tv_sec > sysTime.tv_sec + timeout / 1000)
     {
         ESP_LOGI(TAG, "LED timeout");
         // turn all LEDs off
@@ -94,5 +98,6 @@ void show_error_led(uint8_t red, uint8_t green, uint8_t blue)
     ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, 0, 255 - red, 255 - green, 255 - blue));
     ESP_ERROR_CHECK(led_strip_refresh(led_strip));
 
-    lastUpdate = esp_timer_get_time();
+    // record the time of the last update
+    gettimeofday(&sysTime, NULL);
 }

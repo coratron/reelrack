@@ -405,6 +405,8 @@ function updateTable() {
         console.log(data);
       });
       table.appendChild(tbody);
+      // reload racktable
+      loadRackTable();
     })
     .catch((error) => {
       // Handle any errors here
@@ -560,9 +562,6 @@ function configureSettingsModal(modal, button, sform) {
       updateTable();
       // Close the modal
       modal.style.display = "none";
-
-      // reload racktable
-      loadRackTable();
     });
   });
 }
@@ -712,14 +711,12 @@ function loadRackTable() {
       let numRows = rows.length - 1;
 
       // If the corresponding element in data[] has the field valid not set to true, add a class to the cell
-      if (data[i * numColumns + j] && data[i * numColumns + j].valid !== 1) {
+      if (!data[i * numColumns + j] || data[i * numColumns + j].valid !== 1) {
         cell.classList.add("missing-row");
       }
 
       console.log(data[i * numColumns + j]);
       console.log(data);
-
-      console.log(numRows);
 
       // Populate the cell with the index number
       cell.innerText = i * numColumns + j;
@@ -761,7 +758,7 @@ function loadRackTable() {
 }
 
 //load at least once
-loadRackTable();
+// loadRackTable();
 
 // Get the search bar
 const searchBar = document.getElementById("searchBar");
@@ -891,4 +888,40 @@ document.getElementById("delete-table").addEventListener("click", function () {
     .catch((error) => {
       console.log("Request failed: " + error.message);
     });
+});
+
+// Function to convert data to CSV
+function convertToCSV(objArray) {
+  const array = typeof objArray != "object" ? JSON.parse(objArray) : objArray;
+  let keys = Object.keys(array[0]).filter(key => key !== 'valid');
+  let str = 'id,' + keys.map(value => `"${value}"`).join(",") + '\r\n';
+
+  array.forEach((next, index) => {
+    if (next.valid === 1) {
+      let values = keys.map(key => `"${next[key]}"`);
+      str += index + ',' + values.join(",") + '\r\n';
+    }
+  });
+
+  return str;
+}
+// Function to trigger download of CSV file
+function downloadCSV(data, filename = "download.csv") {
+  let csvData = convertToCSV(data);
+  let blob = new Blob(["\ufeff" + csvData], {
+    type: "text/csv;charset=utf-8;",
+  });
+  let dwldLink = document.createElement("a");
+  let url = URL.createObjectURL(blob);
+  dwldLink.setAttribute("href", url);
+  dwldLink.setAttribute("download", filename);
+  dwldLink.style.visibility = "hidden";
+  document.body.appendChild(dwldLink);
+  dwldLink.click();
+  document.body.removeChild(dwldLink);
+}
+
+// Add event listener to download button
+document.getElementById("download-csv").addEventListener("click", function () {
+  downloadCSV(data);
 });
