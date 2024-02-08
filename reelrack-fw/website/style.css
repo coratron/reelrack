@@ -391,3 +391,48 @@ input:checked + .slider:before {
   margin: auto;
   color: white;
 }
+
+.flex-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+#upload-csv,
+#delete-table {
+  margin-left: auto;
+  margin: 20px auto; /* Center the container */
+}
+  
+#upload-csv button {
+  display: inline-block;
+  background-color: #4caf50; /* Green background */
+  color: white; /* White text */
+  padding: 10px 20px; /* Padding */
+  border: none; /* No border */
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer; /* Cursor changes when hovering over the button */
+  text-decoration: none; /* No underline */
+  font-size: 16px; /* Font size */
+  transition: background-color 0.3s ease; /* Transition effect for hover */
+}
+
+#upload-csv button:hover {
+  background-color: #45a049; /* Darker green on hover */
+}
+
+#delete-table button {
+  display: inline-block;
+  background-color: #d95d4d; /* red background */
+  color: white; /* White text */
+  padding: 10px 20px; /* Padding */
+  border: none; /* No border */
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer; /* Cursor changes when hovering over the button */
+  text-decoration: none; /* No underline */
+  font-size: 16px; /* Font size */
+  transition: background-color 0.3s ease; /* Transition effect for hover */
+}
+
+#delete-table button:hover {
+  background-color: #b23b3b; /* Darker red on hover */
+}

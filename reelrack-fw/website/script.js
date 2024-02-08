@@ -1,5 +1,5 @@
 // // Mock data
-// let data = [];
+let data = [];
 
 // for (let i = 0; i < 40; i++) {
 //   data.push({
@@ -25,6 +25,10 @@ const reelDataDiv = document.getElementById("reelData");
 
 // Create a table
 const table = document.createElement("table");
+
+var modal = document.getElementById("myModal");
+var btn = document.getElementById("addRow");
+setupModal(btn, modal, null);
 
 // // Create table header
 // const thead = document.createElement("thead");
@@ -79,7 +83,7 @@ const manufacturerCheckbox = document.getElementById("toggle-manufacturer");
 const skuCheckbox = document.getElementById("toggle-sku");
 const quantityCheckbox = document.getElementById("toggle-quantity");
 
-updateTable();
+// updateTable();
 
 // Add event listeners
 manufacturerCheckbox.addEventListener("change", updateTable);
@@ -112,13 +116,15 @@ function setupModal(button, modal, reelId) {
       idField.style.backgroundColor = "lightgray";
       idField.value = reelId;
 
-      var reelData = data.find((item) => item.id === reelId);
+      console.log("data", data);
+      console.log("reelID", reelId);
+      var reelData = data[reelId];
 
-      if (reelData) {
+      if (reelData.valid) {
         // Set the reelId field as plain text read-only
         idField.setAttribute("readonly", true);
         idField.style.backgroundColor = "lightgray";
-        idField.value = reelData.id;
+        idField.value = reelId;
 
         // Populate other fields using data
         valueField.value = reelData.value;
@@ -202,10 +208,6 @@ function setupModal(button, modal, reelId) {
     });
 }
 
-var modal = document.getElementById("myModal");
-var btn = document.getElementById("addRow");
-setupModal(btn, modal, null);
-
 function updateTable() {
   // Clear the table
   while (table.firstChild) {
@@ -234,6 +236,83 @@ function updateTable() {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
+  // const tbody = document.createElement("tbody");
+
+  // data.forEach((reel, rowIndex) => {
+  //   let row = document.createElement("tr");
+  //   row.id = `row-${rowIndex}`;
+  //   [
+  //     reel.id,
+  //     reel.value,
+  //     reel.package,
+  //     reel.part_number,
+  //     reel.comp_type,
+  //     skuCheckbox.checked ? reel.sku : null,
+  //     manufacturerCheckbox.checked ? reel.manufacturer : null,
+  //     quantityCheckbox.checked ? reel.quantity : null,
+  //   ]
+  //     .filter((item) => item !== null)
+  //     .forEach((text, index) => {
+  //       const td = document.createElement("td");
+  //       if (index === 0) {
+  //         const reelIDButton = document.createElement("button");
+  //         reelIDButton.textContent = text;
+  //         reelIDButton.addEventListener("click", () => {
+  //           // Trigger the endpoint here
+  //           fetch("/api/v1/rgb/show", {
+  //             method: "POST",
+  //             body: JSON.stringify({ reelID: text }),
+  //             headers: {
+  //               "Content-Type": "application/json",
+  //             },
+  //           })
+  //             .then((response) => response.json())
+  //             .then((data) => {
+  //               // Handle the response data here
+  //             })
+  //             .catch((error) => {
+  //               console.log(error);
+  //             });
+  //         });
+  //         td.appendChild(reelIDButton);
+
+  //         let editButton = document.createElement("button");
+  //         editButton.innerHTML = "✎"; // Edit symbol
+  //         editButton.style.marginLeft = "5px";
+  //         setupModal(editButton, modal, reel.id);
+  //         td.appendChild(editButton);
+
+  //         // Create the delete button
+  //         let deleteButton = document.createElement("button");
+  //         deleteButton.innerHTML = "✖"; // Delete symbol
+  //         deleteButton.style.marginLeft = "5px";
+  //         deleteButton.addEventListener("click", () => {
+  //           fetch(`/api/v1/reel/delete`, {
+  //             method: "DELETE",
+  //             body: JSON.stringify({ id: reel.id }),
+  //           })
+  //             .then((response) => {
+  //               if (!response.ok) {
+  //                 throw new Error("HTTP error " + response.status);
+  //               }
+  //               // Remove the row from the table
+  //               row.parentNode.removeChild(row);
+  //             })
+  //             .catch((error) => {
+  //               console.log("Request failed: " + error.message);
+  //             });
+  //         });
+  //         td.appendChild(deleteButton);
+  //       } else {
+  //         td.textContent = text;
+  //       }
+  //       row.appendChild(td);
+  //     });
+  //   tbody.appendChild(row);
+
+  //   table.appendChild(tbody);
+  // });
+
   //fetch data from server for the body
   fetch("/api/v1/reel/get_all", {
     method: "GET",
@@ -242,10 +321,12 @@ function updateTable() {
     },
   })
     .then((response) => response.json())
-    .then((data) => {
+    .then((responseData) => {
       // Create table body
       const tbody = document.createElement("tbody");
-      data.forEach((reel, rowIndex) => {
+      //clear the global data
+      data = [];
+      responseData.forEach((reel, rowIndex) => {
         let row = document.createElement("tr");
         row.id = `row-${rowIndex}`;
         [
@@ -260,40 +341,68 @@ function updateTable() {
         ]
           .filter((item) => item !== null)
           .forEach((text, index) => {
-            const td = document.createElement("td");
-            if (index === 0) {
-              const reelIDButton = document.createElement("button");
-              reelIDButton.textContent = text;
-              reelIDButton.addEventListener("click", () => {
-                // Trigger the endpoint here
-                fetch("/api/v1/rgb/show", {
-                  method: "POST",
-                  body: JSON.stringify({ reelID: text }),
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                })
-                  .then((response) => response.json())
-                  .then((data) => {
-                    // Handle the response data here
+            if (reel.valid) {
+              const td = document.createElement("td");
+              if (index === 0) {
+                const reelIDButton = document.createElement("button");
+                reelIDButton.textContent = rowIndex;
+                reelIDButton.addEventListener("click", () => {
+                  // Trigger the endpoint here
+                  fetch("/api/v1/rgb/show", {
+                    method: "POST",
+                    body: JSON.stringify({ reelID: rowIndex }),
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
                   })
-                  .catch((error) => {
-                    console.log(error);
-                  });
-              });
-              td.appendChild(reelIDButton);
+                    .then((response) => response.json())
+                    .then((data) => {
+                      // Handle the response data here
+                    })
+                    .catch((error) => {
+                      console.log(error);
+                    });
+                });
+                td.appendChild(reelIDButton);
 
-              let editButton = document.createElement("button");
-              editButton.innerHTML = "✎"; // Edit symbol
-              editButton.style.marginLeft = "5px";
-              setupModal(editButton, modal, reel.id);
-              td.appendChild(editButton);
-            } else {
-              td.textContent = text;
+                let editButton = document.createElement("button");
+                editButton.innerHTML = "✎"; // Edit symbol
+                editButton.style.marginLeft = "5px";
+                setupModal(editButton, modal, rowIndex);
+                td.appendChild(editButton);
+
+                // Create the delete button
+                let deleteButton = document.createElement("button");
+                deleteButton.innerHTML = "✖"; // Delete symbol
+                deleteButton.style.marginLeft = "5px";
+                deleteButton.addEventListener("click", () => {
+                  fetch(`/api/v1/reel/delete`, {
+                    method: "DELETE",
+                    body: JSON.stringify({ id: rowIndex }),
+                  })
+                    .then((response) => {
+                      if (!response.ok) {
+                        throw new Error("HTTP error " + response.status);
+                      }
+                      // Remove the row from the table
+                      row.parentNode.removeChild(row);
+                    })
+                    .catch((error) => {
+                      console.log("Request failed: " + error.message);
+                    });
+                });
+                td.appendChild(deleteButton);
+              } else {
+                td.textContent = text;
+              }
+              row.appendChild(td);
             }
-            row.appendChild(td);
           });
         tbody.appendChild(row);
+
+        //push to global data
+        data.push(reel);
+        console.log(data);
       });
       table.appendChild(tbody);
     })
@@ -377,7 +486,7 @@ document
       document.getElementById("quantity").value = "";
 
       // Update the table
-      updateTable();
+      // updateTable();
     });
     modal.style.display = "none";
     updateTable();
@@ -449,13 +558,12 @@ function configureSettingsModal(modal, button, sform) {
     }).then(function () {
       // Update the table
       updateTable();
+      // Close the modal
+      modal.style.display = "none";
+
+      // reload racktable
+      loadRackTable();
     });
-
-    // Close the modal
-    modal.style.display = "none";
-
-    // reload racktable
-    loadRackTable();
   });
 }
 
@@ -558,12 +666,19 @@ function loadRackTable() {
   // Get the rackTable element
   let rackTable = document.getElementById("rackTable");
 
-  //fetch info from settings from server
+  // fetch info from settings from server
   fetch("/api/v1/rack_settings/get")
     .then((response) => response.json())
     .then((data) => {
       settings = data;
     });
+
+  // //mock settings
+  // settings = {
+  //   numRows: 2,
+  //   numReelsPerRow: 35,
+  //   ledColour: "#FF0000",
+  // };
 
   // Remove all existing rows from the rackTable
   while (rackTable.firstChild) {
@@ -596,10 +711,13 @@ function loadRackTable() {
       // Get the number of rows
       let numRows = rows.length - 1;
 
-      // If the corresponding row in the reelData table is missing, add a class to the cell
-      if (i * numColumns + j >= numRows) {
+      // If the corresponding element in data[] has the field valid not set to true, add a class to the cell
+      if (data[i * numColumns + j] && data[i * numColumns + j].valid !== 1) {
         cell.classList.add("missing-row");
       }
+
+      console.log(data[i * numColumns + j]);
+      console.log(data);
 
       console.log(numRows);
 
@@ -677,4 +795,100 @@ searchBar.addEventListener("input", function () {
       rows[i].style.display = "none";
     }
   }
+});
+document.getElementById("upload-button").addEventListener("click", function () {
+  document.getElementById("csv-file").click();
+});
+
+document
+  .getElementById("csv-file")
+  .addEventListener("change", function (event) {
+    let file = event.target.files[0];
+    let reader = new FileReader();
+
+    reader.onload = function (event) {
+      let csvData = event.target.result;
+
+      //process the data, it contains the reel information
+      let rows = csvData.split("\n");
+      let headers = rows[0].split(",");
+      let reelData = [];
+
+      // console.log(headers);
+
+      // Expected headers
+      let expectedHeaders = [
+        "id",
+        "value",
+        "package",
+        "part_number",
+        "comp_type",
+        "sku",
+        "manufacturer",
+        "quantity",
+      ];
+
+      // Check if all expected headers are present
+      let validFile = expectedHeaders.every((header) =>
+        headers.includes(header)
+      );
+
+      if (!validFile) {
+        alert("Invalid CSV file. Please make sure all headers are present.");
+        return;
+      }
+
+      for (let i = 1; i < rows.length - 1; i++) {
+        let row = rows[i].split(",");
+        console.log("this is line", i, row);
+        let reel = {
+          id: Number(row[headers.indexOf("id")]),
+          value: row[headers.indexOf("value")],
+          package: row[headers.indexOf("package")],
+          part_number: row[headers.indexOf("part_number")],
+          comp_type: row[headers.indexOf("comp_type")],
+          sku: row[headers.indexOf("sku")],
+          manufacturer: row[headers.indexOf("manufacturer")],
+          quantity: Number(row[headers.indexOf("quantity")]),
+        };
+
+        reelData.push(reel);
+
+        //print the reel data
+        console.log(reel);
+        // console.log(reelData);
+
+        // Save each row to the server
+        fetch("/api/v1/reel/save", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(reel),
+        }).then(function (response) {
+          // Update the table
+          updateTable();
+        });
+      }
+    };
+
+    reader.readAsText(file);
+  });
+
+//trigger the delete endpoint when pressing the delete table button
+document.getElementById("delete-table").addEventListener("click", function () {
+  fetch("/api/v1/reel/delete", {
+    method: "DELETE",
+    body: JSON.stringify({ id: -1 }),
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("HTTP error " + response.status);
+      }
+      // Remove the row from the table
+      updateTable();
+    })
+    .catch((error) => {
+      console.log("Request failed: " + error.message);
+    });
 });

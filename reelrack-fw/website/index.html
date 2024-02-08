@@ -35,8 +35,9 @@
         <input type="text" id="searchBar" placeholder="Search...">
       </div>
       
-      <div class="toggle-fields">
-        <div class="switch-container">
+      <div class="flex-container">
+        <div class="toggle-fields">
+          <div class="switch-container">
           <label for="toggle-manufacturer">
             Manufacturer
             <div class="switch">
@@ -44,28 +45,36 @@
               <span class="slider round"></span>
             </div>
           </label>
+          </div>
+          <div class="switch-container">
+            <label for="toggle-sku">
+              SKU
+              <div class="switch">
+                <input type="checkbox" id="toggle-sku" checked />
+                <span class="slider round"></span>
+              </div>
+            </label>
+          </div>
+          <div class="switch-container">
+            <label for="toggle-quantity">
+              Quantity
+              <div class="switch">
+                <input type="checkbox" id="toggle-quantity" checked />
+                <span class="slider round"></span>
+              </div>
+            </label>
+          </div>
+        </div> 
+        <div id="upload-csv">
+          <input type="file" id="csv-file" accept=".csv" style="display: none;" />
+          <button id="upload-button">Upload CSV</button>
         </div>
-        <div class="switch-container">
-          <label for="toggle-sku">
-            SKU
-            <div class="switch">
-              <input type="checkbox" id="toggle-sku" checked />
-              <span class="slider round"></span>
-            </div>
-          </label>
+        <div id="delete-table">
+          <button id="delete-button">Delete Table</button>
         </div>
-        <div class="switch-container">
-          <label for="toggle-quantity">
-            Quantity
-            <div class="switch">
-              <input type="checkbox" id="toggle-quantity" checked />
-              <span class="slider round"></span>
-            </div>
-          </label>
-        </div>
-      </div> 
+      </div>
 
-      
+
       <div id="reelData"></div>
 
       <button id="addRow">Add Reel</button>

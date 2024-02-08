@@ -62,93 +62,52 @@ typedef struct rest_server_context
 rack_settings_t rack_settings;
 smd_reel_t reels[MAX_REELS];
 
-/* Set HTTP response content type according to file extension */
-static esp_err_t set_content_type_from_file(httpd_req_t *req, const char *filepath)
-{
-    const char *type = "text/plain";
-    if (CHECK_FILE_EXTENSION(filepath, ".html"))
-    {
-        type = "text/html";
-    }
-    else if (CHECK_FILE_EXTENSION(filepath, ".js"))
-    {
-        type = "application/javascript";
-    }
-    else if (CHECK_FILE_EXTENSION(filepath, ".css"))
-    {
-        type = "text/css";
-    }
-    else if (CHECK_FILE_EXTENSION(filepath, ".png"))
-    {
-        type = "image/png";
-    }
-    else if (CHECK_FILE_EXTENSION(filepath, ".ico"))
-    {
-        type = "image/x-icon";
-    }
-    else if (CHECK_FILE_EXTENSION(filepath, ".svg"))
-    {
-        type = "text/xml";
-    }
-    return httpd_resp_set_type(req, type);
-}
-
 /* Send HTTP response with the contents of the requested file */
 static esp_err_t rest_common_get_handler(httpd_req_t *req)
 {
-    char filepath[FILE_PATH_MAX];
+    // we are now accessing the files directly from flash as they are embedded, instead of the file system
 
-    rest_server_context_t *rest_context = (rest_server_context_t *)req->user_ctx;
-    strlcpy(filepath, rest_context->base_path, sizeof(filepath));
-    if (req->uri[strlen(req->uri) - 1] == '/')
+    extern const uint8_t index_html_start[] asm("_binary_index_html_start");
+    extern const uint8_t index_html_end[] asm("_binary_index_html_end");
+    extern const uint8_t script_js_start[] asm("_binary_script_js_start");
+    extern const uint8_t script_js_end[] asm("_binary_script_js_end");
+    extern const uint8_t style_css_start[] asm("_binary_style_css_start");
+    extern const uint8_t style_css_end[] asm("_binary_style_css_end");
+
+    const char *data;
+    size_t len;
+    const char *content_type;
+
+    if (strcmp(req->uri, "/") == 0 || strcmp(req->uri, "/index.html") == 0)
     {
-        strlcat(filepath, "/index.html", sizeof(filepath));
+        data = (const char *)index_html_start;
+        len = index_html_end - index_html_start - 1;
+        content_type = "text/html";
+    }
+    else if (strcmp(req->uri, "/script.js") == 0)
+    {
+        data = (const char *)script_js_start;
+        len = script_js_end - script_js_start - 1;
+        content_type = "application/javascript";
+    }
+    else if (strcmp(req->uri, "/style.css") == 0)
+    {
+        data = (const char *)style_css_start;
+        len = style_css_end - style_css_start - 1;
+        content_type = "text/css";
     }
     else
     {
-        strlcat(filepath, req->uri, sizeof(filepath));
-    }
-    int fd = open(filepath, O_RDONLY, 0);
-    if (fd == -1)
-    {
-        ESP_LOGE(REST_TAG, "Failed to open file : %s", filepath);
-        /* Respond with 500 Internal Server Error */
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to read existing file");
+        ESP_LOGE(REST_TAG, "Unknown URI : %s", req->uri);
+        /* Respond with 404 Not Found */
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
         return ESP_FAIL;
     }
 
-    set_content_type_from_file(req, filepath);
+    httpd_resp_set_type(req, content_type);
+    httpd_resp_send(req, data, len);
 
-    char *chunk = rest_context->scratch;
-    ssize_t read_bytes;
-    do
-    {
-        /* Read file in chunks into the scratch buffer */
-        read_bytes = read(fd, chunk, SCRATCH_BUFSIZE);
-        if (read_bytes == -1)
-        {
-            ESP_LOGE(REST_TAG, "Failed to read file : %s", filepath);
-        }
-        else if (read_bytes > 0)
-        {
-            /* Send the buffer contents as HTTP response chunk */
-            if (httpd_resp_send_chunk(req, chunk, read_bytes) != ESP_OK)
-            {
-                close(fd);
-                ESP_LOGE(REST_TAG, "File sending failed!");
-                /* Abort sending file */
-                httpd_resp_sendstr_chunk(req, NULL);
-                /* Respond with 500 Internal Server Error */
-                httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to send file");
-                return ESP_FAIL;
-            }
-        }
-    } while (read_bytes > 0);
-    /* Close file after sending complete */
-    close(fd);
     ESP_LOGI(REST_TAG, "File sending complete");
-    /* Respond with an empty chunk to signal HTTP response completion */
-    httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
 
@@ -172,19 +131,22 @@ static esp_err_t system_info_get_handler(httpd_req_t *req)
 static esp_err_t reel_data_get_handler(httpd_req_t *req)
 {
     httpd_resp_set_type(req, "application/json");
-    if (read_reels_from_vfs(reels, rack_settings.numReelsPerRow * rack_settings.numRows) == ESP_OK)
+    int numReels = read_reels_from_vfs(reels, rack_settings.numReelsPerRow * rack_settings.numRows);
+    if (numReels > 0)
     {
         cJSON *reels_json = cJSON_CreateArray();
-        for (int i = 0; i < rack_settings.numReelsPerRow * rack_settings.numRows; i++)
+        for (int i = 0; i < numReels; i++)
         {
             cJSON *reel_json = cJSON_CreateObject();
+            // cJSON_AddNumberToObject(reel_json, "id", reels[i].id);
+            cJSON_AddNumberToObject(reel_json, "valid", reels[i].valid);
             cJSON_AddStringToObject(reel_json, "value", reels[i].value);
             cJSON_AddStringToObject(reel_json, "package", reels[i].package);
             cJSON_AddStringToObject(reel_json, "part_number", reels[i].part_number);
             cJSON_AddStringToObject(reel_json, "comp_type", reels[i].comp_type);
             cJSON_AddStringToObject(reel_json, "sku", reels[i].sku);
             cJSON_AddStringToObject(reel_json, "manufacturer", reels[i].manufacturer);
-            cJSON_AddStringToObject(reel_json, "quantity", reels[i].quantity);
+            cJSON_AddNumberToObject(reel_json, "quantity", reels[i].quantity);
             cJSON_AddItemToArray(reels_json, reel_json);
         }
 
@@ -238,28 +200,128 @@ static esp_err_t reel_data_post_handler(httpd_req_t *req)
     buf[total_len] = '\0';
 
     cJSON *root = cJSON_Parse(buf);
-    int reel_id = cJSON_GetObjectItem(root, "id")->valueint;
-    cJSON *value_json = cJSON_GetObjectItem(root, "value");
-    cJSON *package_json = cJSON_GetObjectItem(root, "package");
-    cJSON *part_number_json = cJSON_GetObjectItem(root, "part_number");
-    cJSON *comp_type_json = cJSON_GetObjectItem(root, "comp_type");
-    cJSON *sku_json = cJSON_GetObjectItem(root, "sku");
-    cJSON *manufacturer_json = cJSON_GetObjectItem(root, "manufacturer");
-    cJSON *quantity_json = cJSON_GetObjectItem(root, "quantity");
+    if (root == NULL)
+    {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to parse JSON");
+        return ESP_FAIL;
+    }
 
     smd_reel_t reel;
-    strcpy(reel.value, value_json->valuestring);
-    strcpy(reel.package, package_json->valuestring);
-    strcpy(reel.part_number, part_number_json->valuestring);
-    strcpy(reel.comp_type, comp_type_json->valuestring);
-    strcpy(reel.sku, sku_json->valuestring);
-    strcpy(reel.manufacturer, manufacturer_json->valuestring);
-    strcpy(reel.quantity, quantity_json->valuestring);
+    int reel_id = -1;
+
+    cJSON *id_json = cJSON_GetObjectItem(root, "id");
+    if (id_json != NULL)
+    {
+        reel_id = id_json->valueint;
+    }
+
+    cJSON *value_json = cJSON_GetObjectItem(root, "value");
+    if (value_json != NULL)
+    {
+        strcpy(reel.value, value_json->valuestring);
+    }
+
+    cJSON *package_json = cJSON_GetObjectItem(root, "package");
+    if (package_json != NULL)
+    {
+        strcpy(reel.package, package_json->valuestring);
+    }
+
+    cJSON *part_number_json = cJSON_GetObjectItem(root, "part_number");
+    if (part_number_json != NULL)
+    {
+        strcpy(reel.part_number, part_number_json->valuestring);
+    }
+
+    cJSON *comp_type_json = cJSON_GetObjectItem(root, "comp_type");
+    if (comp_type_json != NULL)
+    {
+        strcpy(reel.comp_type, comp_type_json->valuestring);
+    }
+
+    cJSON *sku_json = cJSON_GetObjectItem(root, "sku");
+    if (sku_json != NULL)
+    {
+        strcpy(reel.sku, sku_json->valuestring);
+    }
+
+    cJSON *manufacturer_json = cJSON_GetObjectItem(root, "manufacturer");
+    if (manufacturer_json != NULL)
+    {
+        strcpy(reel.manufacturer, manufacturer_json->valuestring);
+    }
+
+    cJSON *quantity_json = cJSON_GetObjectItem(root, "quantity");
+    if (quantity_json != NULL)
+    {
+        reel.quantity = quantity_json->valueint;
+    }
+
+    reel.valid = true;
 
     save_reel_to_vfs(reel_id, &reel);
 
     cJSON_Delete(root);
     httpd_resp_sendstr(req, "Post control value successfully");
+    return ESP_OK;
+}
+
+// reel data delete handler
+static esp_err_t reel_data_delete_handler(httpd_req_t *req)
+{
+    int total_len = req->content_len;
+    int cur_len = 0;
+    char *buf = ((rest_server_context_t *)(req->user_ctx))->scratch;
+    int received = 0;
+    if (total_len >= SCRATCH_BUFSIZE)
+    {
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "content too long");
+        return ESP_FAIL;
+    }
+    while (cur_len < total_len)
+    {
+        received = httpd_req_recv(req, buf + cur_len, total_len);
+        if (received <= 0)
+        {
+            /* Respond with 500 Internal Server Error */
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to post control value");
+            return ESP_FAIL;
+        }
+        cur_len += received;
+    }
+    buf[total_len] = '\0';
+
+    cJSON *root = cJSON_Parse(buf);
+    if (root == NULL)
+    {
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to parse JSON data");
+        return ESP_FAIL;
+    }
+
+    cJSON *id_json = cJSON_GetObjectItem(root, "id");
+    if (id_json == NULL)
+    {
+        cJSON_Delete(root);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "No 'id' in JSON");
+        return ESP_FAIL;
+    }
+    int reel_id = id_json->valueint;
+
+    if (delete_reel_from_vfs(reel_id, &rack_settings) == ESP_OK)
+    {
+        cJSON_Delete(root);
+        httpd_resp_sendstr(req, "Reel deleted successfully");
+        return ESP_OK;
+    }
+    else
+    {
+        cJSON_Delete(root);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to delete reel");
+        return ESP_FAIL;
+    }
+
     return ESP_OK;
 }
 
@@ -763,6 +825,13 @@ esp_err_t start_rest_server(const char *base_path)
         .handler = reel_data_post_handler,
         .user_ctx = rest_context};
     httpd_register_uri_handler(server, &reel_data_post_uri);
+
+    httpd_uri_t reel_data_delete_uri = {
+        .uri = "/api/v1/reel/delete",
+        .method = HTTP_DELETE,
+        .handler = reel_data_delete_handler,
+        .user_ctx = rest_context};
+    httpd_register_uri_handler(server, &reel_data_delete_uri);
 
     // rack settings post and get
     httpd_uri_t rack_settings_get_uri = {

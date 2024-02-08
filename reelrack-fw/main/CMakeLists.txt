@@ -2,15 +2,6 @@ idf_component_register(SRCS "main.c"
                             "rest_server.c"
                             "db.c"
                             "rgb.c"
-                    INCLUDE_DIRS ".")
+                    INCLUDE_DIRS "."
 
-
-
-set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../website")
-message(STATUS "WEB_SRC_DIR: ${WEB_SRC_DIR}")
-if(EXISTS ${WEB_SRC_DIR})
-    spiffs_create_partition_image(www ${WEB_SRC_DIR} FLASH_IN_PROJECT)
-else()
-    message(FATAL_ERROR "${WEB_SRC_DIR} doesn't exit.")
-endif()
-
+                    EMBED_TXTFILES ../website/index.html ../website/style.css ../website/script.js)

@@ -48,10 +48,25 @@ esp_err_t initialize_vfs()
 
 esp_err_t read_reel_from_vfs(int reel_id, smd_reel_t *reel)
 {
-    FILE *f = fopen("/www/reels", "r");
+    FILE *f = fopen("/www/reels", "r+");
     if (f == NULL)
     {
-        ESP_LOGE(TAG_DB, "Failed to open file for reading single reel");
+        ESP_LOGE(TAG_DB, "Failed to open file for reading single reel, creating a new one");
+        f = fopen("/www/reels", "w+");
+        if (f == NULL)
+        {
+            ESP_LOGE(TAG_DB, "Failed to create a new file");
+            return ESP_FAIL;
+        }
+    }
+
+    // Check if the file is empty
+    fseek(f, 0, SEEK_END);
+    long fileSize = ftell(f);
+    if (fileSize == 0)
+    {
+        ESP_LOGE(TAG_DB, "File is empty, no reel to read");
+        fclose(f);
         return ESP_FAIL;
     }
 
@@ -62,25 +77,42 @@ esp_err_t read_reel_from_vfs(int reel_id, smd_reel_t *reel)
     return ESP_OK;
 }
 
-// add return value to check if file was opened
-esp_err_t read_reels_from_vfs(smd_reel_t *reels, int numReels)
+int read_reels_from_vfs(smd_reel_t *reels, int numReels)
 {
-    FILE *f = fopen("/www/reels", "r");
+    FILE *f = fopen("/www/reels", "r+");
     if (f == NULL)
     {
-        ESP_LOGE(TAG_DB, "Failed to open file for reading multiple reels");
-        return ESP_FAIL;
+        ESP_LOGE(TAG_DB, "Failed to open file for reading multiple reels, creating a new one");
+        f = fopen("/www/reels", "w+");
+        if (f == NULL)
+        {
+            ESP_LOGE(TAG_DB, "Failed to create a new file");
+            return 0;
+        }
     }
 
-    if (fread(reels, sizeof(smd_reel_t), numReels, f) != numReels)
+    // Check if the file is empty
+    fseek(f, 0, SEEK_END);
+    long fileSize = ftell(f);
+    if (fileSize == 0)
     {
-        ESP_LOGE(TAG_DB, "Failed to read reels from file");
-        return ESP_FAIL;
+        ESP_LOGE(TAG_DB, "File is empty, no reels to read");
+        fclose(f);
+        return 0;
     }
 
+    // Calculate the number of reels in the file
+    int numReelsInFile = fileSize / sizeof(smd_reel_t);
+    if (numReelsInFile > numReels)
+    {
+        numReelsInFile = numReels;
+    }
+
+    fseek(f, 0, SEEK_SET);
+    fread(reels, sizeof(smd_reel_t), numReelsInFile, f);
     fclose(f);
 
-    return ESP_OK;
+    return numReelsInFile;
 }
 
 void save_reel_to_vfs(int reel_id, smd_reel_t *reel)
@@ -160,9 +192,35 @@ void get_rack_settings_from_vfs(rack_settings_t *rack_settings)
     fclose(f);
 }
 
-void delete_reel_from_vfs(int reel_id)
+esp_err_t delete_reel_from_vfs(int reel_id, rack_settings_t *rack_settings)
 {
     smd_reel_t reel;
-    memset(&reel, 0, sizeof(smd_reel_t));
-    save_reel_to_vfs(reel_id, &reel);
+    reel.valid = false;
+
+    FILE *f = fopen("/www/reels", "r+");
+    if (f == NULL)
+    {
+        ESP_LOGE(TAG_DB, "Failed to open file for writing");
+        return ESP_FAIL;
+    }
+    else
+    {
+        if (reel_id == -1)
+        {
+            for (int i = 0; i < rack_settings->numReelsPerRow * rack_settings->numRows; i++)
+            {
+                fseek(f, i * sizeof(smd_reel_t), SEEK_SET);
+                fwrite(&reel, sizeof(smd_reel_t), 1, f);
+            }
+        }
+        else
+        {
+            fseek(f, reel_id * sizeof(smd_reel_t), SEEK_SET);
+            fwrite(&reel, sizeof(smd_reel_t), 1, f);
+        }
+
+        fclose(f);
+
+        return ESP_OK;
+    }
 }
