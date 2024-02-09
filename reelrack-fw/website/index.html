@@ -125,10 +125,15 @@
             <input type="text" id="numRows" name="numRows"><br>
             <label for="numReelsPerRow">Number of Reels per Row:</label><br>
             <input type="text" id="numReelsPerRow" name="numReelsPerRow"><br>
+            <label for="ledDirection">Reverse LED Direction:</label><br>
+            <label class="switch" style="margin-bottom: 10px; margin-top: 10px;">
+              <input type="checkbox" id="ledDirection" name="ledDirection">
+              <span class="slider round"></span>
+            </label>
             <label for="ledTimeout">LED Timeout:</label><br>
             <input type="text" id="ledTimeout" name="ledTimeout"><br>
             <label for="brightness">LED Brightness:</label><br>
-            <input type="text" id="ledBrightness" name="ledBrightness"><br>
+            <input type="range" id="ledBrightness" name="ledBrightness" min="0" max="100" step="10"  style="margin-bottom: 10px; margin-top: 10px;"><br>
             <label for="ssid">SSID:</label><br>
             <input type="text" id="ssid" name="ssid"><br>
             <label for="password">Password:</label><br>

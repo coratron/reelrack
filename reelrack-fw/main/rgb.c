@@ -12,8 +12,9 @@ static const char *TAG = "rgb";
 led_strip_handle_t led_strip;
 led_strip_config_t led_strip_config;
 struct timeval sysTime;
+bool inverLedDirection = false;
 
-esp_err_t configure_led(uint32_t numLeds)
+esp_err_t configure_led(uint32_t numLeds, bool ledDirection)
 {
     // LED strip general initialization, according to your led board design
     led_strip_config.strip_gpio_num = LED_STRIP_GPIO;     // The GPIO that connected to the LED strip's data line
@@ -21,6 +22,8 @@ esp_err_t configure_led(uint32_t numLeds)
     led_strip_config.led_pixel_format = LED_PIXEL_FORMAT; // Pixel format of your LED strip
     led_strip_config.led_model = LED_TYPE;                // LED strip model
     led_strip_config.flags.invert_out = false;            // whether to invert the output signal
+
+    inverLedDirection = ledDirection;
 
     // LED strip backend configuration: RMT
     led_strip_rmt_config_t rmt_config = {
@@ -44,6 +47,11 @@ void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue)
 {
     // turn all LEDs off
     ESP_ERROR_CHECK(led_strip_clear(led_strip));
+
+    if (inverLedDirection)
+    {
+        ledIndex = led_strip_config.max_leds - ledIndex - 1;
+    }
 
     // set the target LED
     ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, ledIndex, red, green, blue));

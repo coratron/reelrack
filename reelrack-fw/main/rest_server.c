@@ -335,6 +335,7 @@ static esp_err_t rack_settings_get_handler(httpd_req_t *req)
     cJSON_AddNumberToObject(rack_settings_json, "numReelsPerRow", rack_settings.numReelsPerRow);
     cJSON_AddNumberToObject(rack_settings_json, "numRows", rack_settings.numRows);
     cJSON_AddNumberToObject(rack_settings_json, "ledBrightness", rack_settings.ledBrightness);
+    cJSON_AddNumberToObject(rack_settings_json, "ledDirection", rack_settings.ledDirection);
     cJSON_AddNumberToObject(rack_settings_json, "ledTimeout", rack_settings.ledTimeout);
     cJSON_AddStringToObject(rack_settings_json, "ssid", rack_settings.ssid);
     cJSON_AddStringToObject(rack_settings_json, "password", rack_settings.password);
@@ -388,6 +389,18 @@ static esp_err_t rack_settings_post_handler(httpd_req_t *req)
     rack_settings.numReelsPerRow = atoi(cJSON_GetObjectItem(root, "numReelsPerRow")->valuestring);
     rack_settings.numRows = atoi(cJSON_GetObjectItem(root, "numRows")->valuestring);
     rack_settings.ledBrightness = atoi(cJSON_GetObjectItem(root, "ledBrightness")->valuestring);
+    cJSON *ledDirectionItem = cJSON_GetObjectItem(root, "ledDirection");
+    if (ledDirectionItem != NULL)
+    {
+        if (cJSON_IsTrue(ledDirectionItem))
+        {
+            rack_settings.ledDirection = 1;
+        }
+        else
+        {
+            rack_settings.ledDirection = 0;
+        }
+    }
     rack_settings.ledTimeout = atoi(cJSON_GetObjectItem(root, "ledTimeout")->valuestring);
 
     cJSON *ssid_item = cJSON_GetObjectItem(root, "ssid");
@@ -469,11 +482,14 @@ static esp_err_t rgb_post_handler(httpd_req_t *req)
     else
     {
         uint32_t ledIndex = (uint32_t)cJSON_GetNumberValue(reelID_item);
-        if ((ledIndex >= rack_settings.numReelsPerRow * rack_settings.numRows))
-            show_error_led((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
+        uint8_t adjustedRed = (((rack_settings.ledColour >> 16) & 0xFF) * rack_settings.ledBrightness) / 100;
+        uint8_t adjustedGreen = (((rack_settings.ledColour >> 8) & 0xFF) * rack_settings.ledBrightness) / 100;
+        uint8_t adjustedBlue = ((rack_settings.ledColour & 0xFF) * rack_settings.ledBrightness) / 100;
 
+        if ((ledIndex >= rack_settings.numReelsPerRow * rack_settings.numRows))
+            show_error_led(adjustedRed, adjustedGreen, adjustedBlue);
         else
-            show_led(ledIndex, (rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);
+            show_led(ledIndex, adjustedRed, adjustedGreen, adjustedBlue);
     }
 
     cJSON_Delete(root);
@@ -757,7 +773,7 @@ esp_err_t start_rest_server(const char *base_path)
     get_rack_settings_from_vfs(&rack_settings);
 
     // configure led strip
-    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows);
+    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows, rack_settings.ledDirection);
 
     // boot sequence
     boot_sequence((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);

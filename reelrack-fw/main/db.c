@@ -145,6 +145,7 @@ void save_rack_settings_to_vfs(rack_settings_t *rack_settings)
     ESP_LOGI(TAG_DB, "rack_settings->numRows: %d", rack_settings->numRows);
     ESP_LOGI(TAG_DB, "rack_settings->ledColour: %ld", rack_settings->ledColour);
     ESP_LOGI(TAG_DB, "rack_settings->ledBrightness: %ld", rack_settings->ledBrightness);
+    ESP_LOGI(TAG_DB, "rack_settings->ledDirection: %d", rack_settings->ledDirection);
     ESP_LOGI(TAG_DB, "rack_settings->ledTimeout: %ld", rack_settings->ledTimeout);
     ESP_LOGI(TAG_DB, "rack_settings->ssid: %s", rack_settings->ssid);
     ESP_LOGI(TAG_DB, "rack_settings->password: %s", rack_settings->password);
@@ -185,6 +186,7 @@ void get_rack_settings_from_vfs(rack_settings_t *rack_settings)
     ESP_LOGI(TAG_DB, "rack_settings->numRows: %d", rack_settings->numRows);
     ESP_LOGI(TAG_DB, "rack_settings->ledColour: %ld", rack_settings->ledColour);
     ESP_LOGI(TAG_DB, "rack_settings->ledBrightness: %ld", rack_settings->ledBrightness);
+    ESP_LOGI(TAG_DB, "rack_settings->ledDirection: %d", rack_settings->ledDirection);
     ESP_LOGI(TAG_DB, "rack_settings->ledTimeout: %ld", rack_settings->ledTimeout);
     ESP_LOGI(TAG_DB, "rack_settings->ssid: %s", rack_settings->ssid);
     ESP_LOGI(TAG_DB, "rack_settings->password: %s", rack_settings->password);

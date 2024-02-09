@@ -1,34 +1,33 @@
 #ifndef DB_H
 #define DB_H
 
-#include "esp_vfs.h"
 #include "esp_spiffs.h"
+#include "esp_vfs.h"
 
 #define MAX_REELS 200
 
-typedef struct
-{   
-    bool valid;
-    char value[32];
-    char package[32];
-    char part_number[32];
-    char comp_type[32];
-    char sku[32];
-    char manufacturer[32];
-    int quantity;
+typedef struct {
+  bool valid;
+  char value[256];
+  char package[32];
+  char part_number[32];
+  char comp_type[32];
+  char sku[32];
+  char manufacturer[32];
+  int quantity;
 } smd_reel_t;
 
-typedef struct
-{
-    int numReelsPerRow;
-    int numRows;
-    long ledColour;
-    long ledTimeout;
-    long ledBrightness;
+typedef struct {
+  int numReelsPerRow;
+  int numRows;
+  long ledColour;
+  long ledTimeout;
+  long ledBrightness;
+  bool ledDirection;
 
-    // ssid and password for wifi
-    char ssid[32];
-    char password[32];
+  // ssid and password for wifi
+  char ssid[32];
+  char password[32];
 } rack_settings_t;
 
 esp_err_t initialize_vfs();

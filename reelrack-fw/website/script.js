@@ -511,6 +511,7 @@ function configureSettingsModal(modal, button, sform) {
     document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
     document.getElementById("ledColour").value = settings.ledColour;
     document.getElementById("ledBrightness").value = settings.ledBrightness;
+    document.getElementById("ledDirection").checked = settings.ledDirection;
     document.getElementById("ledTimeout").value = settings.ledTimeout;
     document.getElementById("ssid").value = settings.ssid;
     document.getElementById("password").value = settings.password;
@@ -545,6 +546,7 @@ function configureSettingsModal(modal, button, sform) {
       settings.numReelsPerRow = document.getElementById("numReelsPerRow").value;
       settings.ledColour = document.getElementById("ledColour").value;
       settings.ledBrightness = document.getElementById("ledBrightness").value;
+      settings.ledDirection = document.getElementById("ledDirection").checked;
       settings.ledTimeout = document.getElementById("ledTimeout").value;
       settings.ssid = document.getElementById("ssid").value;
       settings.password = document.getElementById("password").value;
@@ -807,11 +809,9 @@ document
       let csvData = event.target.result;
 
       //process the data, it contains the reel information
-      let rows = csvData.split("\n");
-      let headers = rows[0].split(",");
+      let rows = csvData.split(/\r?\n/); // Handle different line endings
+      let headers = rows[0].split(",").map((header) => header.trim()); // Trim white spaces
       let reelData = [];
-
-      // console.log(headers);
 
       // Expected headers
       let expectedHeaders = [
@@ -836,8 +836,7 @@ document
       }
 
       for (let i = 1; i < rows.length - 1; i++) {
-        let row = rows[i].split(",");
-        console.log("this is line", i, row);
+        let row = rows[i].split(",").map((cell) => cell.trim()); // Trim white spaces
         let reel = {
           id: Number(row[headers.indexOf("id")]),
           value: row[headers.indexOf("value")],
@@ -850,10 +849,6 @@ document
         };
 
         reelData.push(reel);
-
-        //print the reel data
-        console.log(reel);
-        // console.log(reelData);
 
         // Save each row to the server
         fetch("/api/v1/reel/save", {
@@ -893,13 +888,13 @@ document.getElementById("delete-table").addEventListener("click", function () {
 // Function to convert data to CSV
 function convertToCSV(objArray) {
   const array = typeof objArray != "object" ? JSON.parse(objArray) : objArray;
-  let keys = Object.keys(array[0]).filter(key => key !== 'valid');
-  let str = 'id,' + keys.map(value => `"${value}"`).join(",") + '\r\n';
+  let keys = Object.keys(array[0]).filter((key) => key !== "valid");
+  let str = "id," + keys.map((value) => `"${value}"`).join(",") + "\r\n";
 
   array.forEach((next, index) => {
     if (next.valid === 1) {
-      let values = keys.map(key => `"${next[key]}"`);
-      str += index + ',' + values.join(",") + '\r\n';
+      let values = keys.map((key) => `"${next[key]}"`);
+      str += index + "," + values.join(",") + "\r\n";
     }
   });
 
