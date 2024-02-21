@@ -11,7 +11,7 @@
 #define LED_PIXEL_FORMAT LED_PIXEL_FORMAT_GRBW
 #define LED_TIMEOUT (30 * 1000) // in us
 
-esp_err_t configure_led(uint32_t numLeds, bool ledDirection);
+esp_err_t configure_led(uint32_t numReelsPerRow, uint8_t numRows, bool ledDirection);
 void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue);
 void boot_sequence(uint8_t red, uint8_t green, uint8_t blue);
 void turn_off_leds_on_timeout(long timeout);

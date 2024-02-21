@@ -773,7 +773,7 @@ esp_err_t start_rest_server(const char *base_path)
     get_rack_settings_from_vfs(&rack_settings);
 
     // configure led strip
-    configure_led(rack_settings.numReelsPerRow * rack_settings.numRows, rack_settings.ledDirection);
+    configure_led(rack_settings.numReelsPerRow, rack_settings.numRows, rack_settings.ledDirection);
 
     // boot sequence
     boot_sequence((rack_settings.ledColour >> 16) & 0xFF, (rack_settings.ledColour >> 8) & 0xFF, rack_settings.ledColour & 0xFF);

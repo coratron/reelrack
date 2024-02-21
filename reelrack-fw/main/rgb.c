@@ -13,17 +13,21 @@ led_strip_handle_t led_strip;
 led_strip_config_t led_strip_config;
 struct timeval sysTime;
 bool inverLedDirection = false;
+uint32_t nReelsPerRow;
+uint8_t nRows;
 
-esp_err_t configure_led(uint32_t numLeds, bool ledDirection)
+esp_err_t configure_led(uint32_t numReelsPerRow, uint8_t numRows, bool ledDirection)
 {
     // LED strip general initialization, according to your led board design
-    led_strip_config.strip_gpio_num = LED_STRIP_GPIO;     // The GPIO that connected to the LED strip's data line
-    led_strip_config.max_leds = numLeds;                  // The number of LEDs in the strip
-    led_strip_config.led_pixel_format = LED_PIXEL_FORMAT; // Pixel format of your LED strip
-    led_strip_config.led_model = LED_TYPE;                // LED strip model
-    led_strip_config.flags.invert_out = false;            // whether to invert the output signal
+    led_strip_config.strip_gpio_num = LED_STRIP_GPIO;               // The GPIO that connected to the LED strip's data line
+    led_strip_config.max_leds = numReelsPerRow * (uint32_t)numRows; // The number of LEDs in the strip
+    led_strip_config.led_pixel_format = LED_PIXEL_FORMAT;           // Pixel format of your LED strip
+    led_strip_config.led_model = LED_TYPE;                          // LED strip model
+    led_strip_config.flags.invert_out = false;                      // whether to invert the output signal
 
     inverLedDirection = ledDirection;
+    nReelsPerRow = numReelsPerRow;
+    nRows = numRows;
 
     // LED strip backend configuration: RMT
     led_strip_rmt_config_t rmt_config = {
@@ -48,13 +52,32 @@ void show_led(uint32_t ledIndex, uint8_t red, uint8_t green, uint8_t blue)
     // turn all LEDs off
     ESP_ERROR_CHECK(led_strip_clear(led_strip));
 
-    if (inverLedDirection)
+    // Calculate the row and column of the LED
+    uint32_t row = ledIndex / nReelsPerRow;
+    uint32_t col = ledIndex % nReelsPerRow;
+
+    // Check if the row is odd
+    bool isOddRow = row % 2 == 1;
+
+    // Calculate the adjusted LED index based on the zigzag pattern
+    uint32_t adjustedIndex;
+    if (isOddRow)
     {
-        ledIndex = led_strip_config.max_leds - ledIndex - 1;
+        adjustedIndex = (row * nReelsPerRow) + (nReelsPerRow - col - 1);
+    }
+    else
+    {
+        adjustedIndex = (row * nReelsPerRow) + col;
     }
 
-    // set the target LED
-    ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, ledIndex, red, green, blue));
+    // consider the direction of the LED strip
+    if (inverLedDirection)
+    {
+        adjustedIndex = (nReelsPerRow * nRows) - adjustedIndex - 1;
+    }
+
+    // Set the target LED using the adjusted index
+    ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, adjustedIndex, red, green, blue));
 
     if (red == 0 && green == 0 && blue == 0)
     {
