@@ -14,11 +14,13 @@ let data = [];
 //   });
 // }
 
-let settings = {
-  numRows: 2,
-  numReelsPerRow: 35,
-  ledColour: "#FF0000",
-};
+// let settings = {
+//   numRows: 2,
+//   numReelsPerRow: 35,
+//   ledColour: "#FF0000",
+// };
+
+// let settings = {};
 
 // Get the div where we will put the reel data
 const reelDataDiv = document.getElementById("reelData");
@@ -498,25 +500,28 @@ function configureSettingsModal(modal, button, sform) {
   // Get the <span> element that closes the modal
   var span = modal.getElementsByClassName("close")[0];
 
+  let settings;
+
   button.onclick = function () {
     //make sure we have the latest values
     fetch("/api/v1/rack_settings/get")
       .then((response) => response.json())
-      .then((data) => {
-        settings = data;
+      .then((rsettings) => {
+        settings = rsettings;        //load stored values in settings
+        document.getElementById("numRows").value = rsettings.numRows;
+        document.getElementById("numReelsPerRow").value =
+          rsettings.numReelsPerRow;
+        document.getElementById("ledColour").value = rsettings.ledColour;
+        document.getElementById("ledBrightness").value =
+          rsettings.ledBrightness;
+        document.getElementById("ledDirection").checked =
+          rsettings.ledDirection;
+        document.getElementById("ledTimeout").value = rsettings.ledTimeout;
+        document.getElementById("ssid").value = rsettings.ssid;
+        document.getElementById("password").value = rsettings.password;
+
+        modal.style.display = "block";
       });
-
-    //load stored values in settings
-    document.getElementById("numRows").value = settings.numRows;
-    document.getElementById("numReelsPerRow").value = settings.numReelsPerRow;
-    document.getElementById("ledColour").value = settings.ledColour;
-    document.getElementById("ledBrightness").value = settings.ledBrightness;
-    document.getElementById("ledDirection").checked = settings.ledDirection;
-    document.getElementById("ledTimeout").value = settings.ledTimeout;
-    document.getElementById("ssid").value = settings.ssid;
-    document.getElementById("password").value = settings.password;
-
-    modal.style.display = "block";
   };
 
   // When the user clicks on <span> (x), close the modal
@@ -670,93 +675,88 @@ function loadRackTable() {
   // fetch info from settings from server
   fetch("/api/v1/rack_settings/get")
     .then((response) => response.json())
-    .then((data) => {
-      settings = data;
-    });
+    .then((settings) => {
 
-  // //mock settings
-  // settings = {
-  //   numRows: 2,
-  //   numReelsPerRow: 35,
-  //   ledColour: "#FF0000",
-  // };
-
-  // Remove all existing rows from the rackTable
-  while (rackTable.firstChild) {
-    rackTable.removeChild(rackTable.firstChild);
-  }
-
-  // Get the number of rows and columns from your settings
-  let numRows = settings.numRows;
-  let numColumns = settings.numReelsPerRow;
-
-  // Loop through the number of rows
-  for (let i = 0; i < numRows; i++) {
-    // Create a new row
-    let row = document.createElement("tr");
-
-    // Loop through the number of columns
-    for (let j = 0; j < numColumns; j++) {
-      // Create a new cell
-      let cell = document.createElement("td");
-
-      // Get the reelData div
-      let reelDataDiv = document.getElementById("reelData");
-
-      // Get the table inside the reelData div
-      let table = reelDataDiv.querySelector("table");
-
-      // Get the rows in the table
-      let rows = table.querySelectorAll("tr");
-
-      // Get the number of rows
-      let numRows = rows.length - 1;
-
-      // If the corresponding element in data[] has the field valid not set to true, add a class to the cell
-      if (!data[i * numColumns + j] || data[i * numColumns + j].valid !== 1) {
-        cell.classList.add("missing-row");
+      // Remove all existing rows from the rackTable
+      while (rackTable.firstChild) {
+        rackTable.removeChild(rackTable.firstChild);
       }
 
-      console.log(data[i * numColumns + j]);
-      console.log(data);
+      // Get the number of rows and columns from your settings
+      let numRows = settings.numRows;
+      let numColumns = settings.numReelsPerRow;
 
-      // Populate the cell with the index number
-      cell.innerText = i * numColumns + j;
+      // Loop through the number of rows
+      for (let i = 0; i < numRows; i++) {
+        // Create a new row
+        let row = document.createElement("tr");
 
-      // Add an onclick event to the cell
-      cell.onclick = function () {
-        // Get the id of the cell
-        const id = this.innerText;
-        console.log(id);
+        // Loop through the number of columns
+        for (let j = 0; j < numColumns; j++) {
+          // Create a new cell
+          let cell = document.createElement("td");
 
-        // Get the corresponding row in the reelData table
-        let targetRow = document.getElementById(`row-${id}`);
-        console.log(targetRow);
+          // Get the reelData div
+          let reelDataDiv = document.getElementById("reelData");
 
-        // Calculate the scroll position
-        let scrollPosition = targetRow.offsetTop - window.innerHeight / 2;
+          // Get the table inside the reelData div
+          let table = reelDataDiv.querySelector("table");
 
-        // Scroll to the row
-        window.scrollTo({ top: scrollPosition, behavior: "smooth" });
+          // Get the rows in the table
+          let rows = table.querySelectorAll("tr");
 
-        //clear all the backgrounds for all rows
-        for (let i = 0; i < numRows; i++) {
-          let row = document.getElementById(`row-${i}`);
-          row.style.backgroundColor = "";
+          // Get the number of rows
+          let numRows = rows.length - 1;
+
+          // If the corresponding element in data[] has the field valid not set to true, add a class to the cell
+          if (
+            !data[i * numColumns + j] ||
+            data[i * numColumns + j].valid !== 1
+          ) {
+            cell.classList.add("missing-row");
+          }
+
+          console.log(data[i * numColumns + j]);
+          console.log(data);
+
+          // Populate the cell with the index number
+          cell.innerText = i * numColumns + j;
+
+          // Add an onclick event to the cell
+          cell.onclick = function () {
+            // Get the id of the cell
+            const id = this.innerText;
+            console.log(id);
+
+            // Get the corresponding row in the reelData table
+            let targetRow = document.getElementById(`row-${id}`);
+            console.log(targetRow);
+
+            // Calculate the scroll position
+            let scrollPosition = targetRow.offsetTop - window.innerHeight / 2;
+
+            // Scroll to the row
+            window.scrollTo({ top: scrollPosition, behavior: "smooth" });
+
+            //clear all the backgrounds for all rows
+            for (let i = 0; i < numRows; i++) {
+              let row = document.getElementById(`row-${i}`);
+              row.style.backgroundColor = "";
+            }
+
+            // Change the background color of the row
+            targetRow.style.backgroundColor = "lightgreen";
+
+            console.log("Clicked cell " + id);
+          };
+          // Append the cell to the row
+          row.appendChild(cell);
         }
 
-        // Change the background color of the row
-        targetRow.style.backgroundColor = "lightgreen";
-
-        console.log("Clicked cell " + id);
-      };
-      // Append the cell to the row
-      row.appendChild(cell);
-    }
-
-    // Append the row to the table
-    rackTable.appendChild(row);
-  }
+        // Append the row to the table
+        rackTable.appendChild(row);
+      }
+    });
 }
 
 //load at least once
